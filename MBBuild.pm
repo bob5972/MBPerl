@@ -219,4 +219,6 @@ sub Configure(;$)
     foreach my $x (keys(%{$gConfig})) {
         Panic("Unused key found in gConfig: $x => " . $gConfig->{$x} . "\n");
     }
+
+    Warning("\nConfigured!\n");
 }
