@@ -77,9 +77,14 @@ sub Exit()
 # Configure --
 #   Clean up anything on the way out.
 ###########################################################
-sub Configure()
+sub Configure(;$)
 {
+    my $callerOpts = shift;
+
+    ASSERT(!defined($callerOpts) || ref($callerOpts) eq 'HASH');
     ASSERT($gInitialized);
+
+    my @defines;
 
     # Load static defaults
     $gConfig->{'BUILDROOT'} = 'build';
@@ -122,6 +127,7 @@ sub Configure()
 
     if ( $^O eq 'linux') {
         $gConfig->{'LINUX'} = TRUE;
+        $gConfig->{'DEFAULT_CFLAGS'} .= " -D _GNU_SOURCE";
     } elsif ($^O eq 'darwin') {
         $gConfig->{'MACOS'} = TRUE;
     } else {
@@ -169,6 +175,12 @@ sub Configure()
         $gConfig->{'CXX'} = $dcxx;
     }
 
+    # Load defaults from caller
+    foreach my $x (keys(%{$callerOpts})) {
+        $gConfig->{$x} = $callerOpts->{$x};
+        push(@defines, $x);
+    }
+
     if ($OPTIONS->{'verbose'}) {
         Dump($gConfig);
     }
@@ -193,7 +205,8 @@ sub Configure()
     }
 
     # Save joint MakeFile/Header options
-    foreach my $x ('LINUX', 'MACOS', 'DEBUG', 'DEVEL') {
+    push(@defines, 'LINUX', 'MACOS', 'DEBUG', 'DEVEL');
+    foreach my $x (@defines) {
         if (defined($gConfig->{$x})) {
             print $cMake "$x=" . $gConfig->{$x} . "\n";
             print $cHeader "#define $x " . $gConfig->{$x} . "\n";
