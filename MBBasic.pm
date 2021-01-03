@@ -91,70 +91,17 @@ sub basename { require File::Basename; return File::Basename::basename(@_); }
 sub catfile { require File::Spec::Functions; return File::Spec->catfile(@_); }
 sub catdir { require File::Spec::Functions; return File::Spec->catdir(@_); }
 
-###############################################################
-# max --
-#   Wrap List::Util::max, but propagate undef without warning.
-###############################################################
-sub max
-{
-    my $a = \@_;
-
-    ASSERT(ref($a) eq "ARRAY");
-
-    if (ArrayLen($a) == 0) {
-        return undef;
-    }
-
-    foreach my $e (@{$a}) {
-        if (!defined($e)) {
-            return undef;
-        }
-    }
-
-    my $max = List::Util::max(@{$a});
-    return $max;
-}
-
-
-###############################################################
-# min --
-#   Wrap List::Util::min, but propagate undef without warning.
-###############################################################
-sub min
-{
-    my $a = \@_;
-
-    ASSERT(ref($a) eq "ARRAY");
-
-    if (ArrayLen($a) == 0) {
-        return undef;
-    }
-
-    foreach my $e (@{$a}) {
-        if (!defined($e)) {
-            return undef;
-        }
-    }
-
-    my $min = List::Util::min(@{$a});
-    return $min;
-}
-
 
 ###########################################################
 # Init --
-#   Initialize the library and prase the options.
-#   Returns a hashref of parsed options.
+#   Initialize the library and parse the options.
 ###########################################################
-sub Init($)
+sub Init()
 {
-    my $scriptOptionList = shift;
-    ASSERT(ref($scriptOptionList) eq "HASH");
+    ASSERT(!$gInitialized);
+    LoadOptions($gBasicOptionList, __PACKAGE__);
 
     $gInitialized = TRUE;
-
-    $gOptionList = MergeOptionLists($scriptOptionList, $gBasicOptionList);
-
     if (!ParseOptions(\@ARGV, $OPTIONS, $gOptionList) ||
         $OPTIONS->{help} || $OPTIONS->{usage}) {
         Usage(TRUE);
@@ -179,8 +126,23 @@ sub Init($)
 ###########################################################
 sub Exit()
 {
+    ASSERT($gInitialized);
     StatTimePop("MBBasic::Script");
     StatsReport();
+}
+
+
+###########################################################
+# LoadOptions --
+#   Load options from the provided array.
+###########################################################
+sub LoadOptions($;$)
+{
+    my $opts = shift;
+    my $category = shift;
+
+    ASSERT(!$gInitialized);
+    $gOptionList = MergeOptionLists($gOptionList, $opts, $category);
 }
 
 
@@ -234,25 +196,44 @@ sub ParseOptions($$$)
 
 ###########################################################
 # MergeOptionLists --
-#   Merge two option lists together.
+#   Merge two option lists together using the specified
+#   option category.
 #
 #   Returns the new option list.
 ###########################################################
-sub MergeOptionLists($$)
+sub MergeOptionLists($$;$)
 {
-    my $scriptOptionList = shift;
-    my $libOptionList = shift;
+    my $oldOptions = shift;
+    my $newOptions = shift;
+    my $category = shift;
 
     my $oup = {};
 
-    foreach my $key (keys(%{$libOptionList})) {
-        $oup->{$key} = $libOptionList->{$key};
+    foreach my $key (keys(%{$oldOptions})) {
+        $oup->{$key} = $oldOptions->{$key};
     }
 
-    foreach my $key (keys(%{$scriptOptionList})) {
-        VERIFY(!defined($oup->{$key}),
-               "Duplicate option: $key\n");
-        $oup->{$key} = $scriptOptionList->{$key};
+    foreach my $key (keys(%{$newOptions})) {
+        if (defined($oup->{$key})) {
+            if (defined($newOptions->{$key}->{'override'}) &&
+                $oup->{$key}->{'category'} eq
+                $newOptions->{$key}->{'override'}) {
+                # New option overrides old
+                $oup->{$key} = $newOptions->{$key};
+                $oup->{$key}->{'category'} = $category;
+            } elsif (defined($oup->{$key}->{'override'}) &&
+                     $category eq $oup->{$key}->{'override'}) {
+                # Old option overrides new
+            } else {
+               Panic("Duplicate option without \'override\': key=$key",
+                     "oldCategory=" . $oup->{$key}->{'category'},
+                     "newCategory=" . $category);
+            }
+        } else {
+            # Only the new option exists
+            $oup->{$key} = $newOptions->{$key};
+            $oup->{$key}->{'category'} = $category;
+        }
     }
 
     return $oup;
@@ -633,6 +614,57 @@ sub StatsReport()
         Warning($str);
     }
 }
+
+
+###############################################################
+# max --
+#   Wrap List::Util::max, but propagate undef without warning.
+###############################################################
+sub max
+{
+    my $a = \@_;
+
+    ASSERT(ref($a) eq "ARRAY");
+
+    if (ArrayLen($a) == 0) {
+        return undef;
+    }
+
+    foreach my $e (@{$a}) {
+        if (!defined($e)) {
+            return undef;
+        }
+    }
+
+    my $max = List::Util::max(@{$a});
+    return $max;
+}
+
+
+###############################################################
+# min --
+#   Wrap List::Util::min, but propagate undef without warning.
+###############################################################
+sub min
+{
+    my $a = \@_;
+
+    ASSERT(ref($a) eq "ARRAY");
+
+    if (ArrayLen($a) == 0) {
+        return undef;
+    }
+
+    foreach my $e (@{$a}) {
+        if (!defined($e)) {
+            return undef;
+        }
+    }
+
+    my $min = List::Util::min(@{$a});
+    return $min;
+}
+
 
 ###########################################################
 # average --
