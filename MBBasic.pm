@@ -35,7 +35,8 @@ our ($VERSION, @ISA, @EXPORT, @EXPORT_OK);
 # set the version for version checking
 $VERSION     = 1.0;
 @ISA         = qw(Exporter);
-@EXPORT_OK   = qw($PROGRAM_VERSION $PROGRAM_NAME $AUTHOR $COPYRIGHT_DATE
+@EXPORT_OK   = qw($PROGRAM_VERSION $PROGRAM_NAME $PROGRAM_AUTHOR
+                  $PROGRAM_COPYRIGHT_DATE
                   &Init &Exit &StatsReport);
 @EXPORT      = qw(TRUE FALSE $OPTIONS
                   &ASSERT &VERIFY &FUNCTION &Panic &NOT_REACHED
@@ -59,8 +60,8 @@ use constant FALSE => 0;
 # (So scripts can override them at the top of their files.
 our $PROGRAM_VERSION;
 our $PROGRAM_NAME=basename($0);
-our $AUTHOR = "Michael Banack";
-our $COPYRIGHT_DATE;
+our $PROGRAM_AUTHOR;
+our $PROGRAM_COPYRIGHT_DATE;
 
 # Exported parsed options list.
 our $OPTIONS = {};
@@ -73,11 +74,15 @@ my $gOptionList;
 my $gPanicCount;
 
 my $gBasicOptionList = {
-    "help|h|?!" =>  { desc => "Print this help text.", default => FALSE },
-    "version|v!" => { desc => "Print the version number.", default => FALSE },
-    "verbose|V!" => { desc => "Print verbose messages.", default => FALSE},
-    "stats!" => { desc => "Collect stats information.", default => FALSE},
-    "verboseStats!" => { desc=>"Print verbose stat information.", default => FALSE},
+    "help|h|?!" =>  { desc => "Print this help text", default => FALSE },
+    "version|v!" => { desc => "Print the version number", default => FALSE },
+    "verbose|V!" => { desc => "Print verbose messages", default => FALSE},
+    "stats!" => { desc => "Collect stats information",
+                  default => FALSE,
+                  hidden => TRUE, },
+    "verboseStats!" => { desc => "Print verbose stat information",
+                         default => FALSE,
+                         hidden => TRUE, },
 };
 
 # Wrappers for standard Perl library functions
@@ -271,10 +276,13 @@ sub Usage(;$)
         $versionLine .= " version $PROGRAM_VERSION"
     }
 
-    $versionLine .= " Copyright $AUTHOR";
-
-    if (defined($COPYRIGHT_DATE)) {
-        $versionLine .= " $COPYRIGHT_DATE";
+    if (defined($PROGRAM_AUTHOR)) {
+        if (defined($PROGRAM_COPYRIGHT_DATE)) {
+            $versionLine .= "\nCopyright (c) $PROGRAM_COPYRIGHT_DATE " .
+                            "$PROGRAM_AUTHOR";
+        } else {
+            $versionLine .= " by $PROGRAM_AUTHOR";
+        }
     }
 
     Warning("$versionLine\n");
@@ -286,8 +294,10 @@ sub Usage(;$)
     Warning("Usage: $PROGRAM_NAME [options]\n");
 
     foreach my $opt (keys(%{$gOptionList})) {
-        my $str = sprintf("%20s : %s", $opt, $gOptionList->{$opt}->{desc});
-        Warning("$str\n");
+        if (!$gOptionList->{$opt}->{'hidden'}) {
+            my $str = sprintf("%20s : %s", $opt, $gOptionList->{$opt}->{desc});
+            Warning("$str\n");
+        }
     }
 }
 
