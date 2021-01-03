@@ -165,7 +165,7 @@ sub Init($)
     if ($OPTIONS->{stats}) {
         $gStats = {};
     }
-    StatTimePush("MJBBasic::Script");
+    StatTimePush("MBBasic::Script");
 }
 
 
@@ -175,7 +175,7 @@ sub Init($)
 ###########################################################
 sub Exit()
 {
-    StatTimePop("MJBBasic::Script");
+    StatTimePop("MBBasic::Script");
     StatsReport();
 }
 
@@ -457,10 +457,10 @@ sub GetPanicLine()
             $function = "undefined";
         }
 
-        if ($function ne "MJBBasic::Panic" &&
-            $function ne "MJBBasic::ASSERT" &&
-            $function ne "MJBBasic::NOT_IMPLEMENTED" &&
-            $function ne "MJBBasic::VERIFY") {
+        if ($function ne "MBBasic::Panic" &&
+            $function ne "MBBasic::ASSERT" &&
+            $function ne "MBBasic::NOT_IMPLEMENTED" &&
+            $function ne "MBBasic::VERIFY") {
 
             $file =~ s/^.*[\/\\]//g;
             return "$file:$line ($function)";
@@ -603,7 +603,7 @@ sub StatsReport()
     ASSERT(ArrayLen($gStatsStack) == 0,
            "Unpopped stat still on the stack.");
 
-    Warning("MJBBasic::StatsReport\n");
+    Warning("MBBasic::StatsReport\n");
     my $str = sprintf("%30s %10s %20s %20s\n",
                       "Name", "Count", "SelfTime", "TotalTime");
     Warning($str);
@@ -671,11 +671,11 @@ sub LoadMRegFile($)
     open($fh, '<', $mregFile) or Panic("Unable to open MReg file", $!);
     $line = <$fh>;
     chomp($line);
-    VERIFY($line =~ /^MJBBasic::MReg::Version=(\d+)$/,
+    VERIFY($line =~ /^MJ?BBasic::MReg::Version=(\d+)$/,
            "File does not appear to be an MReg file",
            "file=$mregFile");
     my $version = $1;
-    VERIFY($version <= 2);
+    VERIFY($version <= 3);
 
     while (defined($line = <$fh>)) {
         my $key;
@@ -711,7 +711,7 @@ sub SaveMRegFile($$)
 
     my $fh;
     open($fh, '>', $mregFile) or Panic("Unable to open MReg file", $!);
-    print $fh "MJBBasic::MReg::Version=2\n";
+    print $fh "MBBasic::MReg::Version=3\n";
     foreach my $key (sort keys(%{$entries})) {
         my $value = $entries->{$key};
 
