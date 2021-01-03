@@ -88,13 +88,13 @@ sub Configure(;$)
 
     # Load static defaults
     $gConfig->{'BUILDROOT'} = 'build';
-    $gConfig->{'DEBUG'} = TRUE;
-    $gConfig->{'DEVEL'} = TRUE;
+    $gConfig->{'MB_DEBUG'} = TRUE;
+    $gConfig->{'MB_DEVEL'} = TRUE;
 
     # Load environment defaults
     foreach my $x ('BUILDROOT', 'TMPDIR', 'DEPROOT',
                    'MBLIB_BUILDDIR', 'MBLIB_DEPDIR',
-                   'MBLIB_SRCDIR', 'DEBUG', 'DEFAULT_CFLAGS',
+                   'MBLIB_SRCDIR', 'MB_DEBUG', 'DEFAULT_CFLAGS',
                    'CC', 'CXX') {
         if (defined($ENV{$x})) {
             $gConfig->{$x} = $ENV{$x};
@@ -126,17 +126,17 @@ sub Configure(;$)
     }
 
     if ( $^O eq 'linux') {
-        $gConfig->{'LINUX'} = TRUE;
+        $gConfig->{'MB_LINUX'} = TRUE;
         $gConfig->{'DEFAULT_CFLAGS'} .= " -D _GNU_SOURCE";
     } elsif ($^O eq 'darwin') {
-        $gConfig->{'MACOS'} = TRUE;
+        $gConfig->{'MB_MACOS'} = TRUE;
     } else {
         Panic("Unknown OS: $^O\n");
     }
 
     $gConfig->{'DEFAULT_CFLAGS'} .= " -march=native";
 
-    if ($gConfig->{'DEVEL'}) {
+    if ($gConfig->{'MB_DEVEL'}) {
         $gConfig->{'DEFAULT_CFLAGS'} .= " -Wall -Wextra -Werror -g";
         $gConfig->{'DEFAULT_CFLAGS'} .= " -Wno-attributes";
         $gConfig->{'DEFAULT_CFLAGS'} .= " -Wno-unused-parameter";
@@ -145,7 +145,7 @@ sub Configure(;$)
         $gConfig->{'DEFAULT_CFLAGS'} .= " -Wno-unused-result";
     }
 
-    if ($gConfig->{'DEBUG'}) {
+    if ($gConfig->{'MB_DEBUG'}) {
         $gConfig->{'DEFAULT_CFLAGS'} .= " -Og -g";
         $gConfig->{'DEFAULT_CFLAGS'} .= " -fno-omit-frame-pointer";
         $gConfig->{'DEFAULT_CFLAGS'} .= " -Wno-type-limits";
@@ -195,6 +195,10 @@ sub Configure(;$)
     open($cMake, '>', 'config.mk') or Panic($!);
     open($cHeader, '>', catfile($gConfig->{'BUILDROOT'}, 'config.h')) or Panic($!);
 
+    print $cHeader "#ifndef ALLOW_MBBUILD_CONFIG_H\n";
+    print $cHeader "#error Cannot include config.h directly, use mbconfig.h\n";
+    print $cHeader "#endif\n";
+
     # Save Makefile options
     foreach my $x  ('BUILDROOT', 'TMPDIR', 'DEPROOT',
                     'MBLIB_BUILDDIR', 'MBLIB_DEPDIR',
@@ -205,7 +209,22 @@ sub Configure(;$)
     }
 
     # Save joint MakeFile/Header options
-    push(@defines, 'LINUX', 'MACOS', 'DEBUG', 'DEVEL');
+    foreach my $x ('MB_LINUX', 'MB_MACOS', 'MB_DEBUG', 'MB_DEVEL') {
+        my $lcx = lc($x);
+        if (defined($gConfig->{$x})) {
+            ASSERT($gConfig->{$x} eq '1' || $gConfig->{$x} eq '0');
+
+            print $cMake "$x=" . $gConfig->{$x} . "\n";
+
+            if ($gConfig->{$x} eq '1') {
+                print $cHeader "#define $x " . $gConfig->{$x} . "\n";
+            }
+        }
+
+        delete $gConfig->{$x};
+    }
+
+    # Save caller defines
     foreach my $x (@defines) {
         if (defined($gConfig->{$x})) {
             print $cMake "$x=" . $gConfig->{$x} . "\n";
