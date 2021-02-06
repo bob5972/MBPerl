@@ -36,7 +36,7 @@ $VERSION     = 1.1;
 @ISA         = qw(Exporter);
 @EXPORT_OK   = qw($PROGRAM_VERSION $PROGRAM_NAME $PROGRAM_AUTHOR
                   $PROGRAM_COPYRIGHT_DATE
-                  &Init &Exit &StatsReport OpenLogFile);
+                  &Init &Exit &StatsReport OpenLogFile SetExtraUsage);
 @EXPORT      = qw(TRUE FALSE $OPTIONS
                   &ASSERT &VERIFY &FUNCTION &Panic &NOT_REACHED
                   &NOT_IMPLEMENTED &ArrayLen
@@ -72,6 +72,7 @@ my $gInitialized;
 my $gOptionList;
 my $gPanicCount;
 my $gLogFile;
+my $gExtraUsageFn;
 
 my $gBasicOptionList = {
     "help|h|?!" =>  { desc => "Print this help text", default => FALSE },
@@ -247,6 +248,16 @@ sub MergeOptionLists($$;$)
     return $oup;
 }
 
+###########################################################
+# SetExtraUsage --
+#   Set the function called to print extra Usage.
+###########################################################
+sub SetExtraUsage($)
+{
+    my $fn = shift;
+    $gExtraUsageFn = $fn;
+}
+
 
 ###########################################################
 # Usage --
@@ -287,6 +298,10 @@ sub Usage(;$)
             my $str = sprintf("%20s : %s", $opt, $gOptionList->{$opt}->{desc});
             Warning("$str\n");
         }
+    }
+
+    if (defined($gExtraUsageFn)) {
+        $gExtraUsageFn->();
     }
 }
 
@@ -830,7 +845,7 @@ sub SaveMRegFile($$)
     my $fh;
     open($fh, '>', $mregFile) or Panic("Unable to open MReg file", $!);
     print $fh "MBBasic::MReg::Version=4\n";
-    foreach my $key (sort keys(%{$entries})) {
+    foreach my $key (keys(%{$entries})) {
         my $value = $entries->{$key};
 
         ASSERT($key !~ /\R/, "MReg key can't contain newlines");
