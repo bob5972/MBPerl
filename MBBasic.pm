@@ -32,12 +32,11 @@ use warnings;
 
 use Exporter();
 our ($VERSION, @ISA, @EXPORT, @EXPORT_OK);
-# set the version for version checking
-$VERSION     = 1.0;
+$VERSION     = 1.1;
 @ISA         = qw(Exporter);
 @EXPORT_OK   = qw($PROGRAM_VERSION $PROGRAM_NAME $PROGRAM_AUTHOR
                   $PROGRAM_COPYRIGHT_DATE
-                  &Init &Exit &StatsReport);
+                  &Init &Exit &StatsReport OpenLogFile);
 @EXPORT      = qw(TRUE FALSE $OPTIONS
                   &ASSERT &VERIFY &FUNCTION &Panic &NOT_REACHED
                   &NOT_IMPLEMENTED &ArrayLen
@@ -72,11 +71,13 @@ my $gStats;
 my $gInitialized;
 my $gOptionList;
 my $gPanicCount;
+my $gLogFile;
 
 my $gBasicOptionList = {
     "help|h|?!" =>  { desc => "Print this help text", default => FALSE },
     "version|v!" => { desc => "Print the version number", default => FALSE },
     "verbose|V!" => { desc => "Print verbose messages", default => FALSE},
+    "log=s" => { desc => "Use the specified log file", default => undef },
     "stats!" => { desc => "Collect stats information",
                   default => FALSE,
                   hidden => TRUE, },
@@ -117,6 +118,11 @@ sub Init()
     if ($OPTIONS->{stats}) {
         $gStats = {};
     }
+
+    if (defined($OPTIONS->{log})) {
+        OpenLogFile($OPTIONS->{log});
+    }
+
     StatTimePush("MBBasic::Script");
 }
 
@@ -130,6 +136,7 @@ sub Exit()
     ASSERT($gInitialized);
     StatTimePop("MBBasic::Script");
     StatsReport();
+    CloseLogFile();
 }
 
 
@@ -283,6 +290,7 @@ sub Usage(;$)
     }
 }
 
+
 #######################################
 # ArrayLen --
 #  Returns the length of an array ref.
@@ -294,27 +302,76 @@ sub ArrayLen($)
     return scalar @{ $a }
 }
 
+
+###########################################################
+# OpenLogFile --
+#   Opens the specified log file, and starts using it to
+#   log Warning/Log calls.
+###########################################################
+sub OpenLogFile($)
+{
+    my $logFileName = shift;
+
+    if (defined($gLogFile)) {
+        CloseLogFile();
+        ASSERT(!defined($gLogFile));
+    }
+
+    open($gLogFile, ">", $logFileName) or
+        Panic("Unable to open log file: $logFileName");
+    VERIFY(defined($gLogFile));
+}
+
+
+###########################################################
+# CloseLogFile --
+#   Closes an opened log file.
+#   Nothing further will be logged.
+###########################################################
+sub CloseLogFile()
+{
+    if (defined($gLogFile)) {
+        Log("Closing log file...\n");
+        close($gLogFile);
+        $gLogFile = undef;
+    }
+}
+
+
 ###########################################################
 # Warning --
-#   Print the arguments to the console.
+#   Print the arguments to the console, and log file.
 ###########################################################
 sub Warning($)
 {
     my $msg = shift;
+
     print($msg);
+
+    if (defined($gLogFile)) {
+        print $gLogFile $msg;
+    }
 }
 
+
 ###########################################################
-# LogV --
-#   Log all the arguments if set to be verbose.
+# Log --
+#   Print the arguments to the log-file, and also to the
+#   console if set to be verbose.
 ###########################################################
-sub LogV($)
+sub Log($)
 {
     my $msg = shift;
+
     if ($OPTIONS->{verbose}) {
         print($msg);
     }
+
+    if (defined($gLogFile)) {
+        print $gLogFile $msg;
+    }
 }
+
 
 ###########################################################
 # Dump --
@@ -330,6 +387,7 @@ sub Dump($)
     Warning(Data::Dumper::Dumper($arg));
     $Data::Dumper::Sortkeys = $old;
 }
+
 
 ###########################################################
 # NOT_IMPLEMENTED --
@@ -362,6 +420,7 @@ sub ASSERT($;@)
         Panic("ASSERT", @args);
     }
 }
+
 
 ###########################################################
 # VERIFY --
@@ -487,7 +546,9 @@ sub Panic
     Warning("       " . GetPanicLine() . "\n\n");
     PrintBacktrace();
 
-    print("PANIC: $message\n");
+    CloseLogFile();
+
+    print("\nPANIC: $message\n\n");
     exit(254);
 }
 
