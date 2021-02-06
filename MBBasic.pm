@@ -43,7 +43,7 @@ $VERSION     = 1.0;
                   &NOT_IMPLEMENTED &ArrayLen
                   &TRACE
                   &Warning &LogV
-                  &splitpath &basename &catfile &catdir
+                  &splitpath &basename &catfile &catdir &hostname
                   &StatTimePush &StatTimePop
                   &Dump &max &min &average
                   &LoadMRegFile &SaveMRegFile
@@ -90,6 +90,7 @@ sub splitpath { require File::Spec; return File::Spec->splitpath(@_); }
 sub basename { require File::Basename; return File::Basename::basename(@_); }
 sub catfile { require File::Spec::Functions; return File::Spec->catfile(@_); }
 sub catdir { require File::Spec::Functions; return File::Spec->catdir(@_); }
+sub hostname { require Sys::Hostname; return Sys::Hostname::hostname(); }
 
 
 ###########################################################
