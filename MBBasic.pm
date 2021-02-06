@@ -774,25 +774,40 @@ sub LoadMRegFile($)
     open($fh, '<', $mregFile) or Panic("Unable to open MReg file", $!);
     $line = <$fh>;
     chomp($line);
-    VERIFY($line =~ /^MJ?BBasic::MReg::Version=(\d+)$/,
+    VERIFY($line =~ /^(MJ?BBasic)::MReg::Version=(\d+)$/,
            "File does not appear to be an MReg file",
            "file=$mregFile");
-    my $version = $1;
-    VERIFY($version <= 3);
+    my $module = $1;
+    my $version = $2;
+    VERIFY($version >= 0 && $version <= 4);
+    if ($version <= 2) {
+        VERIFY($module eq 'MJBBasic');
+    } else {
+        VERIFY($module eq 'MBBasic');
+    }
 
     while (defined($line = <$fh>)) {
         my $key;
         my $value;
-        if ($line =~ /^\"/) {
-            VERIFY($line =~ /^\"([^"]+)\"=(.*)$/);
+        chomp($line);
+        if ($line =~ /^#/ || $line =~ /^\s*$/) {
+            # Ignore comments and blank lines.
+            # They won't be loaded or saved out.
+        } elsif ($line =~ /^([^="']+)=([^="']*)$/ ||
+                 $line =~ /^([^'"=]+)=\s*\"([^"]*)\"\s*$/ ||
+                 $line =~ /^([^'"=]+)=\s*\'([^']*)\'\s*$/ ||
+                 $line =~ /^\"([^"]+)\"\s*=\s*\"([^"]*)\"\s*$/ ||
+                 $line =~ /^\'([^']+)\'\s*=\s*\'([^']*)\'\s*$/ ||
+                 $line =~ /^\"([^"]+)\"\s*=\s*\'([^']*)\'\s*$/ ||
+                 $line =~ /^\'([^']+)\'\s*=\s*\"([^"]*)\"\s*$/ ||
+                 $line =~ /^\'([^']+)\'\s*=(.*)$/ ||
+                 $line =~ /^\"([^"]+)\"\s*=(.*)$/) {
             $key = $1;
             $value = $2;
+            $entries->{$key} = $value;
         } else {
-            VERIFY($line =~ /^([^=]+)=(.*)$/, "line=$line");
-            $key = $1;
-            $value = $2;
+            Panic("Malformatted line", "line=$line");
         }
-        $entries->{$key} = $value;
     }
     close($fh);
 
@@ -814,15 +829,33 @@ sub SaveMRegFile($$)
 
     my $fh;
     open($fh, '>', $mregFile) or Panic("Unable to open MReg file", $!);
-    print $fh "MBBasic::MReg::Version=3\n";
+    print $fh "MBBasic::MReg::Version=4\n";
     foreach my $key (sort keys(%{$entries})) {
         my $value = $entries->{$key};
 
-        if ($key =~ /=/) {
+        ASSERT($key !~ /\R/, "MReg key can't contain newlines");
+        ASSERT($value !~ /\R/, "MReg value can't contain newlines");
+
+        if ($key =~ /\"/) {
+            ASSERT($key !~ /\'/, "Bad MReg key: $key");
+            $key = "\'$key\'";
+        } elsif ($key =~ /\s|=/) {
+            ASSERT($key !~ /\"/);
             $key = "\"$key\"";
         } else {
-            ASSERT($key !~ /"/ && $key ne "", "Bad MReg key: $key");
+            ASSERT($key !~ /\"|\'|=/ && $key ne "", "Bad MReg key: $key");
         }
+
+        if ($value =~ /\"/) {
+            ASSERT($value !~ /\'/, "Bad MReg value: $value");
+            $value = "\'$value\'";
+        } elsif ($value =~ /\s|=/) {
+            ASSERT($value !~ /\"/);
+            $value = "\"$value\"";
+        } else {
+            ASSERT($value !~ /\"|\'|=/, "Bad MReg value: $value");
+        }
+
         printf $fh "$key=$value\n";
     }
     close($fh);
