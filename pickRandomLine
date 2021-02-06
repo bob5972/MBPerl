@@ -1,0 +1,6 @@
+#!/usr/bin/perl
+
+my @lines = <>;
+my $line = @lines[rand($.)];
+chomp($line);
+print "$line\n";

@@ -1,0 +1,7 @@
+#!/usr/bin/perl
+
+while ($line = <STDIN>) {
+    #$line =~ tr/a-z/A-Z/;
+    $line = uc($line);
+    print $line;
+}
