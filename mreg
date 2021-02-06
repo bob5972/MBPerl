@@ -1,0 +1,220 @@
+#!/usr/bin/perl
+#
+# mreg
+#
+# Copyright (c) 2009-2021 Michael Banack
+#
+# MIT License
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
+BEGIN {
+    if (defined($ENV{'HOME'})) {
+        eval("use lib '$ENV{HOME}/bin/MBPerl'");
+    } else {
+        my $USERNAME = getpwuid($<);
+        if ($USERNAME eq 'root') {
+            eval("use lib '/root/bin/MBPerl'");
+        } elsif (-d "/home/" . $USERNAME) {
+            eval("use lib '/home/$USERNAME/bin/MBPerl'");
+        }
+    }
+}
+
+use strict;
+use warnings;
+use File::Copy;
+
+use MBBasic;
+
+$MBBasic::PROGRAM_VERSION="2.0";
+$MBBasic::PROGRAM_COPYRIGHT_DATE="2009-2021";
+$MBBasic::PROGRAM_AUTHOR="Michael Banack";
+
+my $gMregOptions = {
+    "file|f=s" => { desc => "Specify database file",
+                    default => undef, },
+    "dump|d!" => { desc => "Dump database after operation",
+                   default => FALSE, },
+};
+
+my $gMRegFile;
+
+my $searchKey;
+my $putKey;
+my $putValue;
+my $modified = FALSE;
+my $dumpF;
+my $initF;
+
+sub ExtraUsage() {
+    Warning("Extra Usage:\n");
+    Warning("\tmreg get key\n");
+    Warning("\tmreg put key value\n");
+    Warning("\tmreg delete key\n");
+    Warning("\tmreg dump\n");
+    Warning("\tmreg init\n");
+}
+
+sub Main() {
+    MBBasic::SetExtraUsage(\&ExtraUsage);
+    MBBasic::LoadOptions($gMregOptions, "mreg");
+    MBBasic::Init();
+
+    my $ARG = $OPTIONS->{bareOptions};
+    my $ARGC = ArrayLen($OPTIONS->{bareOptions});
+    for (my $i = 0; $i < $ARGC; $i++) {
+        my $cmd = $ARG->[$i];
+
+        if ($cmd eq 'help') {
+            MBBasic::Usage(TRUE);
+            return 0;
+        } elsif ($cmd eq 'put') {
+            if ($i + 2 < $ARGC && $i + 3 >= $ARGC) {
+                $i++;
+                $putKey = $ARG->[$i];
+                $i++;
+                $putValue = $ARG->[$i];
+                $i++;
+                if ($i < $ARGC) {
+                    Panic("Syntax Error: Too many arguments!\n");
+                }
+                last;
+            } else {
+                Panic("Syntax Error: put key value\n");
+            }
+        } elsif ($cmd eq 'delete') {
+            if ($i + 1 < $ARGC && $i + 2 >= $ARGC) {
+                $i++;
+                $putKey = $ARG->[$i];
+                $i++;
+                if ($i < $ARGC) {
+                    Panic("Syntax Error: Too many arguments!\n");
+                }
+                last;
+            } else {
+                Panic("Syntax Error: put key value\n");
+            }
+        } elsif ($cmd eq 'get') {
+            if ($i + 1 < $ARGC && $i + 2 >= $ARGC) {
+                $i++;
+                $searchKey = $ARG->[$i];
+                $i++;
+                if ($i < $ARGC) {
+                    Panic("Syntax Error: Too many arguments!\n");
+                }
+                last;
+            } else {
+                Panic("Syntax Error: get key\n");
+            }
+        } elsif ($cmd eq 'dump') {
+            $OPTIONS->{'dump'} = TRUE;
+            $i++;
+            if ($i < $ARGC) {
+                Panic("Syntax Error: Too many arguments!\n");
+            }
+            last;
+        } elsif ($cmd eq 'init') {
+            $initF = TRUE;
+            $i++;
+            if ($i < $ARGC) {
+                Panic("Syntax Error: Too many arguments!\n");
+            }
+            last;
+        } else {
+            Panic("Unknown command: $cmd\n");
+        }
+    }
+
+    if (!defined($initF) && !$OPTIONS->{'dump'} &&
+        !defined($searchKey) && !defined($putKey) ) {
+        Panic("Syntax Error: Must specify an operation!");
+    }
+
+    if (defined($OPTIONS->{'file'})) {
+        $gMRegFile = $OPTIONS->{'file'};
+    } else {
+        $gMRegFile = "$ENV{'HOME'}/bin/data/mreg.mreg";
+    }
+
+    ASSERT(defined($initF) || -e $gMRegFile,
+           "MReg file $gMRegFile does not exist!\n");
+
+    my $entries = {};
+
+    if (defined($initF)) {
+        $modified = TRUE;
+    } else {
+        $entries = LoadMRegFile($gMRegFile);
+
+        if (defined($searchKey)) {
+            my $k = $searchKey;
+            my $v = "";
+            if (defined($entries->{$searchKey})) {
+                $v = $entries->{$searchKey};
+            }
+            print("$k = $v\n");
+        }
+
+        if (defined($putKey)) {
+            if(defined($putValue) &&
+               (!defined($entries->{$putKey}) ||
+                $putValue ne $entries->{$putKey})) {
+                $modified = TRUE;
+                $entries->{$putKey} = $putValue;
+            } elsif (!defined($putValue) &&
+                     defined($entries->{$putKey})) {
+                $modified = TRUE;
+                delete $entries->{$putKey};
+            }
+        }
+
+        if ($OPTIONS->{'dump'}) {
+            foreach my $k (keys(%{$entries})) {
+                my $v = $entries->{$k};
+                Warning("$k=$v\n");
+            }
+        }
+    }
+
+    if ($modified) {
+        if (defined($initF) && -f $gMRegFile) {
+            Panic("Can't init $gMRegFile", "File already exists\n");
+        }
+
+        my $tmpFileName = "$gMRegFile.tmp";
+        SaveMRegFile($entries, $tmpFileName);
+        move($gMRegFile, "$gMRegFile.bak");
+        move($tmpFileName, $gMRegFile);
+    }
+
+    MBBasic::Exit();
+    return 0;
+}
+
+# Call the main routine.
+my $exitCode;
+eval {
+    $exitCode = Main();
+}; Panic($@) if $@;
+exit $exitCode;
+
+
+
+
