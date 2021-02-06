@@ -1,8 +1,8 @@
 #!/usr/bin/perl
 #
-# mreg
+# mreg -- part of MBPerl
 #
-# Copyright (c) 2009-2021 Michael Banack
+# Copyright (c) 2009-2021 Michael Banack <github@banack.net>
 #
 # MIT License
 #
@@ -143,7 +143,7 @@ sub Main() {
     }
 
     if (!defined($initF) && !$OPTIONS->{'dump'} &&
-        !defined($searchKey) && !defined($putKey) ) {
+        !defined($searchKey) && !defined($putKey)) {
         Panic("Syntax Error: Must specify an operation!");
     }
 
@@ -214,7 +214,3 @@ eval {
     $exitCode = Main();
 }; Panic($@) if $@;
 exit $exitCode;
-
-
-
-
