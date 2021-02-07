@@ -63,6 +63,7 @@ sub ExtraUsage() {
 }
 
 sub Main() {
+    MBBasic::SetExtraUsage(\&ExtraUsage);
     MBBasic::LoadOptions($gScriptOptions, 'match');
     MBBasic::Init();
 
