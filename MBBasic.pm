@@ -32,11 +32,15 @@ use warnings;
 
 use Exporter();
 our ($VERSION, @ISA, @EXPORT, @EXPORT_OK);
-$VERSION     = 1.1;
+$VERSION     = 1.2;
 @ISA         = qw(Exporter);
 @EXPORT_OK   = qw($PROGRAM_VERSION $PROGRAM_NAME $PROGRAM_AUTHOR
                   $PROGRAM_COPYRIGHT_DATE
-                  &Init &Exit &StatsReport OpenLogFile SetExtraUsage);
+                  &Init &Exit &StatsReport OpenLogFile SetExtraUsage
+                  $COLOR_OFF $COLOR_BLACK $COLOR_RED $COLOR_GREEN
+                  $COLOR_YELLOW $COLOR_BLUE $COLOR_MAGENTA $COLOR_CYAN
+                  $COLOR_WHITE $SHELL_COLOR_MAP
+                  &GetColorValue &ColorWrap &ColorStrip);
 @EXPORT      = qw(TRUE FALSE $OPTIONS
                   &ASSERT &VERIFY &FUNCTION &Panic &NOT_REACHED
                   &NOT_IMPLEMENTED &ArrayLen
@@ -64,6 +68,30 @@ our $PROGRAM_COPYRIGHT_DATE;
 
 # Exported parsed options list.
 our $OPTIONS = {};
+
+# Public Constants
+our $COLOR_OFF="\033[0;39m";
+our $COLOR_BLACK="\033[1;30m";
+our $COLOR_RED="\033[1;31m";
+our $COLOR_GREEN="\033[1;32m";
+our $COLOR_YELLOW="\033[1;33m";
+our $COLOR_BLUE="\033[1;34m";
+our $COLOR_MAGENTA="\033[1;35m";
+our $COLOR_CYAN="\033[1;36m";
+our $COLOR_WHITE="\033[1;37m";
+
+our $SHELL_COLOR_MAP = {
+    'off'     => $COLOR_OFF,
+    'black'   => $COLOR_BLACK,
+    'red'     => $COLOR_RED,
+    'green'   => $COLOR_GREEN,
+    'yellow'  => $COLOR_YELLOW,
+    'blue'    => $COLOR_BLUE,
+    'magenta' => $COLOR_MAGENTA,
+    'cyan'    => $COLOR_CYAN,
+    'white'   => $COLOR_WHITE,
+};
+
 
 # Private module variables.
 my $gStatsStack;
@@ -1139,7 +1167,6 @@ sub HyphenString($)
 }
 
 
-
 ###########################################################
 # Trim --
 #   Strip leading/trailing ws from a given string.
@@ -1155,6 +1182,57 @@ sub Trim($)
     $s =~ s/^\s+//g;
     $s =~ s/\s+$//g;
     return $s;
+}
+
+
+###########################################################
+# GetColorValue --
+#   Look up a shell color value from the name,
+#   or undef, if no such color is found.
+###########################################################
+sub GetColorValue($)
+{
+    my $colorReq = shift;
+
+    if ($colorReq eq "none") {
+        $colorReq = "off";
+    }
+
+    return $SHELL_COLOR_MAP->{$colorReq};
+}
+
+
+###########################################################
+# ColorWrap --
+#   Wrap the provided string in the specified shell color.
+###########################################################
+sub ColorWrap($$)
+{
+    my $msg = shift;
+    my $color = shift;
+    my $colorV = GetColorValue($color);
+
+    ASSERT(defined($colorV));
+    return $colorV . $msg . $COLOR_OFF;
+}
+
+
+###########################################################
+# ColorStrip --
+#   Remove all shell color sequences from the provided
+#   string.
+###########################################################
+sub ColorStrip($)
+{
+    my $msg = shift;
+
+    foreach my $seq (values %{$SHELL_COLOR_MAP}) {
+        # replace special chars
+        $seq =~ s/\\/\\\\/;
+        $seq =~ s/\[/\\\[/;
+        $msg =~ s/$seq//g;
+    }
+    return $msg;
 }
 
 return 1; # We always load successfully.

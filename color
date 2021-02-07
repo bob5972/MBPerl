@@ -1,0 +1,206 @@
+#!/usr/bin/perl
+#
+# color -- part of MBPerl
+#
+# Copyright (c) 2008-2021 Michael Banack <github@banack.net>
+#
+# MIT License
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
+BEGIN {
+    if (defined($ENV{'HOME'})) {
+        eval("use lib '$ENV{HOME}/bin/MBPerl'");
+    } else {
+        my $USERNAME = getpwuid($<);
+        if ($USERNAME eq 'root') {
+            eval("use lib '/root/bin/MBPerl'");
+        } elsif (-d "/home/" . $USERNAME) {
+            eval("use lib '/home/$USERNAME/bin/MBPerl'");
+        }
+    }
+}
+
+use Getopt::Std;
+
+use MBBasic;
+use MBBasic qw(ColorWrap ColorStrip GetColorValue $SHELL_COLOR_MAP);
+
+use strict;
+use warnings;
+
+$MBBasic::PROGRAM_VERSION = "1.2";
+$MBBasic::PROGRAM_NAME="color";
+$MBBasic::PROGRAM_AUTHOR = "Michael Banack";
+$MBBasic::PROGRAM_COPYRIGHT_DATE = "2008-2021";
+
+my $gScriptOptions = {
+    # Does manual option parsing out of bareOptions.
+};
+
+sub ExtraUsage() {
+    Console("Usage: color [-c color] [-s goodText badText] [-m regexp [color]]\n");
+    Console("\tcolor: Colorizes the input\n");
+    Console("\t-k: kill (strip) existing colors\n");
+    Console("\t-c: color: Sets the default output color\n");
+    Console("\t-s: goodRegExp badRegExp: Status Mode colors goodRegExp green and badRegExp red\n");
+    Console("\t-m: regexp color: colors everything matching regexp with the specified color\n");
+    Console("\n");
+    Console("\tAllowed Colors: \n");
+    Console("\t\t");
+    foreach my $color (sort keys %{$SHELL_COLOR_MAP}) {
+        Console(ColorWrap($color, $color));
+        Console(", ");
+    }
+    Console("\n");
+}
+
+sub Main() {
+
+    # Initialize color tables
+    my @MCOLOR_NAMES = ("red", "green", "yellow", "blue", "magenta",
+                        "cyan", "white", "black");
+    my @MCOLORS;
+    foreach my $c (@MCOLOR_NAMES) {
+        push(@MCOLORS, GetColorValue($c));
+    }
+
+    my $useDefaultColor=0;
+    my $killExistingColors=0;
+    my $defaultColor=$MBBasic::COLOR_RED;
+    my @matchRE;
+    my @matchColor;
+    my $matchUCCount=0;
+
+    my $argv = [];
+    push(@{$argv}, @ARGV);
+    @ARGV = ();
+    my $argc = ArrayLen($argv);
+
+    #Default arguments
+    if ($argc < 1) {
+        $argv = ["-c", "red"];
+    } elsif ($argc == 1) {
+        if ($argc == 1 && $argv->[0] !~ /^-/) {
+            $argv->[1] = $argv->[0];
+            $argv->[0] = "-m";
+        }
+    }
+    $argc = ArrayLen($argv);
+
+    # Manually parse arguments
+    for(my $i = 0; $i < $argc; $i++) {
+        my $arg=$argv->[$i];
+
+        if($arg =~ s/^-//) 	{
+            #Argument starts with -
+            if ($arg =~ /^k$/) {
+                $killExistingColors=1;
+            } elsif ($arg =~ /^c$/) {
+                $i++;
+                if($i > $argc) {
+                    Panic("Syntax Error: Expected: color");
+                }
+                $defaultColor=GetColorValue($argv->[$i]);
+                $useDefaultColor=1;
+            } elsif($arg=~ /^m$/) {
+                $i++;
+                if ($i > $argc) {
+                    Panic("Syntax Error: Expected: regexp\n");
+                }
+
+                $matchRE[@matchRE]=$argv->[$i];
+                $i++;
+                if ($i >= $argc || $argv->[$i] =~ /-/) {
+                    $i--;
+                    $matchColor[@matchColor] = $MCOLORS[($matchUCCount++)%(@MCOLORS)];
+                } else {
+                    $matchColor[@matchColor] = GetColorValue($argv->[$i]);
+                }
+            } elsif ($arg =~ /^s$/) {
+                $i++;
+                if($i > $argc) {
+                    Panic("Syntax Error: Expected: goodRegExp");
+                }
+                my $goodRE = $argv->[$i];
+
+                $i++;
+                if($i > $argc) {
+                    Panic("Syntax Error: Expected: badRegExp");
+                }
+                my $badRE = $argv->[$i];
+
+                $matchRE[@matchRE]=$goodRE;
+                $matchRE[@matchRE]=$badRE;
+
+                $matchColor[@matchColor]=${MBBasic::COLOR_GREEN};
+                $matchColor[@matchColor]=${MBBasic::COLOR_RED};
+            } else {
+                push(@ARGV, $arg);
+            }
+        } else {
+            Panic("Bad Argument $arg\n");
+        }
+    }
+
+    # Initialize MBBasic (after manually parsing arguments, and mangling @ARGV)
+    MBBasic::SetExtraUsage(\&ExtraUsage);
+    MBBasic::LoadOptions($gScriptOptions, 'color');
+    MBBasic::Init();
+
+    if($useDefaultColor != 1) {
+        $defaultColor=$MBBasic::COLOR_OFF;
+    }
+
+    #system 'echo -ne "'.$defaultColor.'"';
+    if ($defaultColor ne $MBBasic::COLOR_OFF) {
+        Console("$defaultColor");
+    }
+
+    my $temp;
+    while ($temp=<STDIN>) {
+        if ($killExistingColors != 0) {
+            $temp = ColorStrip($temp);
+        }
+
+        # Do Match processing
+        # Currently has trouble with nested matches,
+        # but it hasn't come up yet.
+        for(my $x=0; $x < @matchRE; $x++) {
+            $temp =~ s/($matchRE[$x])/$matchColor[$x]$1$defaultColor/g;
+        }
+        Console("$temp");
+    }
+
+    #Should be safe to do extra off's
+    #system 'echo -ne "'.$colorOff.'"';
+    if ($defaultColor ne $MBBasic::COLOR_OFF) {
+        Console("$MBBasic::COLOR_OFF");
+    }
+
+    MBBasic::Exit();
+    return 0; #Karel.die();
+}
+
+# Call the main routine.
+my $exitCode;
+eval {
+    $exitCode = Main();
+}; Panic($@) if $@;
+exit $exitCode;
