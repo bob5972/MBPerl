@@ -292,6 +292,7 @@ sub Usage(;$)
         return;
     }
 
+    Warning("\n");
     Warning("Usage: $PROGRAM_NAME [options]\n");
 
     foreach my $opt (keys(%{$gOptionList})) {
@@ -300,6 +301,8 @@ sub Usage(;$)
             Warning("$str\n");
         }
     }
+
+    Warning("\n");
 
     if (defined($gExtraUsageFn)) {
         $gExtraUsageFn->();
