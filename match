@@ -1,0 +1,128 @@
+#!/usr/bin/perl
+#
+# match -- part of MBPerl
+#
+# Copyright (c) 2021 Michael Banack <github@banack.net>
+#
+# MIT License
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
+BEGIN {
+    if (defined($ENV{'HOME'})) {
+        eval("use lib '$ENV{HOME}/bin/MBPerl'");
+    } else {
+        my $USERNAME = getpwuid($<);
+        if ($USERNAME eq 'root') {
+            eval("use lib '/root/bin/MBPerl'");
+        } elsif (-d "/home/" . $USERNAME) {
+            eval("use lib '/home/$USERNAME/bin/MBPerl'");
+        }
+    }
+}
+
+use MBBasic;
+
+use strict;
+use warnings;
+
+my %options;
+
+$MBBasic::PROGRAM_VERSION = "1.2";
+$MBBasic::PROGRAM_AUTHOR = "Michael Banack";
+$MBBasic::PROGRAM_COPYRIGHT_DATE = "2011-2021";
+
+my $gScriptOptions = {
+    "matchingOnly|m!" => { desc => "Print only matching lines",
+                           default => FALSE, },
+};
+
+sub ExtraUsage() {
+    Console("Usage: match [options] pattern [printSpec]\n");
+    Console("\tmatch: Perform the specified perl-regexp on all input lines and print them\n");
+    Console("\t(Similar to sed.)\n");
+    Console("Examples:\n");
+    Console("\tmatch 's/blog/blargh/'\n");
+    Console("\tmatch '/(.*) (\\d+)/' '\$2 \$1'\n");
+}
+
+sub Main() {
+    MBBasic::LoadOptions($gScriptOptions, 'match');
+    MBBasic::Init();
+
+    my $matchingOnly = $OPTIONS->{matchingOnly};
+
+    my $pattern = $OPTIONS->{bareOptions}->[0];
+    my $printExp = $OPTIONS->{bareOptions}->[1];
+
+    if (!defined($pattern)) {
+        Panic("No pattern specified!\n");
+    }
+
+    my $line;
+    my $retValue = 1;
+
+    while ($line = <STDIN>) {
+        my $isMatch;
+        my $cmd;
+        my @backref;
+        my @backrefStart;
+        my @backrefEnd;
+        my $i;
+        my $printLine;
+
+        $cmd = "{
+                \$isMatch = (\$line =~ $pattern);
+                \@backrefStart = \@-;
+                \@backrefEnd = \@+;
+        };";
+
+        eval($cmd);
+
+        foreach $i (1..$#backrefStart) {
+            my $len = $backrefEnd[$i] - $backrefStart[$i];
+            $backref[$i] = substr($line, $backrefStart[$i],$len);
+        }
+
+        if (defined($printExp)) {
+            $printLine = $printExp;
+            foreach $i (1..$#backref) {
+                $printLine =~ s/\$${i}/$backref[$i]/;
+            }
+            $line = "$printLine\n";
+        }
+
+        if ($isMatch) {
+            $retValue = 0;
+        }
+
+        if ($isMatch || !$matchingOnly) {
+            Console("$line");
+        }
+    }
+
+    return $retValue;
+}
+
+# Call the main routine.
+my $exitCode;
+eval {
+    $exitCode = Main();
+}; Panic($@) if $@;
+exit $exitCode;
