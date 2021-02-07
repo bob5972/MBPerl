@@ -57,7 +57,7 @@ $MBBasic::PROGRAM_COPYRIGHT_DATE = "2011-2021";
 
 sub ExtraUsage() {
     Warning("Usage: $MBBasic::PROGRAM_NAME [options] workCommand\n");
-    Warning("\tRead lines from stdIn and invoke workCommand on each of them\n");
+    Warning("\t$MBBasic::PROGRAM_NAME Read lines from stdIn and invoke workCommand on each of them\n");
     Warning("\t(Similar to xargs.)\n");
 }
 

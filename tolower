@@ -24,8 +24,50 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-while ($line = <STDIN>) {
-    #$line =~ tr/A-Z/a-z/;
-    $line = lc($line);
-    print $line;
+BEGIN {
+    if (defined($ENV{'HOME'})) {
+        eval("use lib '$ENV{HOME}/bin/MBPerl'");
+    } else {
+        my $USERNAME = getpwuid($<);
+        if ($USERNAME eq 'root') {
+            eval("use lib '/root/bin/MBPerl'");
+        } elsif (-d "/home/" . $USERNAME) {
+            eval("use lib '/home/$USERNAME/bin/MBPerl'");
+        }
+    }
 }
+
+use MBBasic;
+
+use strict;
+use warnings;
+
+$MBBasic::PROGRAM_VERSION = "1.0";
+$MBBasic::PROGRAM_AUTHOR = "Michael Banack";
+$MBBasic::PROGRAM_COPYRIGHT_DATE = "2021";
+
+sub ExtraUsage() {
+    Warning("Usage: $MBBasic::PROGRAM_NAME [options]\n");
+    Warning("\t$MBBasic::PROGRAM_NAME Read lines from stdIn print them in lower-case\n");
+}
+
+sub Main() {
+    MBBasic::SetExtraUsage(\&ExtraUsage);
+    MBBasic::Init();
+
+    my $line;
+    while ($line = <STDIN>) {
+        #$line =~ tr/A-Z/a-z/;
+        $line = lc($line);
+        print $line;
+    }
+
+    MBBasic::Exit();
+}
+
+# Call the main routine.
+my $exitCode;
+eval {
+    $exitCode = Main();
+}; Panic($@) if $@;
+exit $exitCode;

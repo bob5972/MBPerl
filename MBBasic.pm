@@ -293,9 +293,16 @@ sub Usage(;$)
     }
 
     Warning("\n");
-    Warning("Usage: $PROGRAM_NAME [options]\n");
 
-    foreach my $opt (keys(%{$gOptionList})) {
+    if (defined($gExtraUsageFn)) {
+        $gExtraUsageFn->();
+    } else {
+        Warning("Usage: $PROGRAM_NAME [options]\n");
+    }
+
+    Warning("\n");
+    Warning("Options:\n");
+    foreach my $opt (sort keys(%{$gOptionList})) {
         if (!$gOptionList->{$opt}->{'hidden'}) {
             my $str = sprintf("%20s : %s", $opt, $gOptionList->{$opt}->{desc});
             Warning("$str\n");
@@ -303,10 +310,6 @@ sub Usage(;$)
     }
 
     Warning("\n");
-
-    if (defined($gExtraUsageFn)) {
-        $gExtraUsageFn->();
-    }
 }
 
 
@@ -339,6 +342,8 @@ sub OpenLogFile($)
     open($gLogFile, ">", $logFileName) or
         Panic("Unable to open log file: $logFileName");
     VERIFY(defined($gLogFile));
+
+    Log("Opening log file...\n");
 }
 
 

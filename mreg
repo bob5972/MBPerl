@@ -64,7 +64,8 @@ my $dumpF;
 my $initF;
 
 sub ExtraUsage() {
-    Warning("Extra Usage:\n");
+    Warning("Usage:\n");
+    Warning("\tmreg: A simple string registry database\n");
     Warning("\tmreg get key\n");
     Warning("\tmreg put key value\n");
     Warning("\tmreg delete key\n");
