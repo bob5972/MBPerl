@@ -63,7 +63,7 @@ sub Main() {
     }
 
     while ($line = pop(@arr)) {
-        print $line;
+        Console($line);
     }
 
     MBBasic::Exit();

@@ -64,13 +64,13 @@ my $dumpF;
 my $initF;
 
 sub ExtraUsage() {
-    Warning("Usage:\n");
-    Warning("\tmreg: A simple string registry database\n");
-    Warning("\tmreg get key\n");
-    Warning("\tmreg put key value\n");
-    Warning("\tmreg delete key\n");
-    Warning("\tmreg dump\n");
-    Warning("\tmreg init\n");
+    Console("Usage:\n");
+    Console("\tmreg: A simple string registry database\n");
+    Console("\tmreg get key\n");
+    Console("\tmreg put key value\n");
+    Console("\tmreg delete key\n");
+    Console("\tmreg dump\n");
+    Console("\tmreg init\n");
 }
 
 sub Main() {
@@ -170,7 +170,7 @@ sub Main() {
             if (defined($entries->{$searchKey})) {
                 $v = $entries->{$searchKey};
             }
-            print("$k = $v\n");
+            Console("$k=$v\n");
         }
 
         if (defined($putKey)) {
@@ -189,7 +189,7 @@ sub Main() {
         if ($OPTIONS->{'dump'}) {
             foreach my $k (keys(%{$entries})) {
                 my $v = $entries->{$k};
-                Warning("$k=$v\n");
+                Console("$k=$v\n");
             }
         }
     }

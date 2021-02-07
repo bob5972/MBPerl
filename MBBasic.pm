@@ -41,7 +41,7 @@ $VERSION     = 1.1;
                   &ASSERT &VERIFY &FUNCTION &Panic &NOT_REACHED
                   &NOT_IMPLEMENTED &ArrayLen
                   &TRACE
-                  &Warning &LogV
+                  &Console &Warning &Log
                   &splitpath &basename &catfile &catdir &hostname &shell_quote
                   &StatTimePush &StatTimePop
                   &Dump &max &min &average
@@ -79,6 +79,9 @@ my $gBasicOptionList = {
     "version|v!" => { desc => "Print the version number", default => FALSE },
     "verbose|V!" => { desc => "Print verbose messages", default => FALSE},
     "log=s" => { desc => "Use the specified log file", default => undef },
+    "appendLog!" => { desc => "Append to the log file", default => FALSE },
+    "mergeStdErr!" => { desc => "Send stdErr to stdOut", default => FALSE },
+    "muteStdOut!" => { desc => "Mute stdOut", default => FALSE },
     "stats!" => { desc => "Collect stats information",
                   default => FALSE,
                   hidden => TRUE, },
@@ -106,8 +109,18 @@ sub Init()
     LoadOptions($gBasicOptionList, __PACKAGE__);
 
     $gInitialized = TRUE;
-    if (!ParseOptions(\@ARGV, $OPTIONS, $gOptionList) ||
-        $OPTIONS->{help} || $OPTIONS->{usage}) {
+
+    my $optSuccess = ParseOptions(\@ARGV, $OPTIONS, $gOptionList);
+
+    if ($OPTIONS->{mergeStdErr}) {
+        *STDERR = *STDOUT;
+    }
+
+    if ($OPTIONS->{muteStdOut}) {
+        open STDOUT, '>/dev/null' or Panic("Can't open /dev/null: $!");
+    }
+
+    if (!$optSuccess || $OPTIONS->{help} || $OPTIONS->{usage}) {
         Usage(TRUE);
         exit 255;
     }
@@ -286,30 +299,30 @@ sub Usage(;$)
         }
     }
 
-    Warning("$versionLine\n");
+    Console("$versionLine\n");
 
     if (!$fullUsage) {
         return;
     }
 
-    Warning("\n");
+    Console("\n");
 
     if (defined($gExtraUsageFn)) {
         $gExtraUsageFn->();
     } else {
-        Warning("Usage: $PROGRAM_NAME [options]\n");
+        Console("Usage: $PROGRAM_NAME [options]\n");
     }
 
-    Warning("\n");
-    Warning("Options:\n");
+    Console("\n");
+    Console("Options:\n");
     foreach my $opt (sort keys(%{$gOptionList})) {
         if (!$gOptionList->{$opt}->{'hidden'}) {
             my $str = sprintf("%20s : %s", $opt, $gOptionList->{$opt}->{desc});
-            Warning("$str\n");
+            Console("$str\n");
         }
     }
 
-    Warning("\n");
+    Console("\n");
 }
 
 
@@ -328,7 +341,7 @@ sub ArrayLen($)
 ###########################################################
 # OpenLogFile --
 #   Opens the specified log file, and starts using it to
-#   log Warning/Log calls.
+#   log Console/Warning/Log calls.
 ###########################################################
 sub OpenLogFile($)
 {
@@ -339,7 +352,12 @@ sub OpenLogFile($)
         ASSERT(!defined($gLogFile));
     }
 
-    open($gLogFile, ">", $logFileName) or
+    my $mode = '>';
+    if ($OPTIONS->{appendLog}) {
+        $mode = '>>';
+    }
+
+    open($gLogFile, $mode, $logFileName) or
         Panic("Unable to open log file: $logFileName");
     VERIFY(defined($gLogFile));
 
@@ -363,14 +381,30 @@ sub CloseLogFile()
 
 
 ###########################################################
+# Console --
+#   Print the arguments to StdOut, and log file.
+###########################################################
+sub Console($)
+{
+    my $msg = shift;
+
+    print $msg;
+
+    if (defined($gLogFile)) {
+        print $gLogFile $msg;
+    }
+}
+
+
+###########################################################
 # Warning --
-#   Print the arguments to the console, and log file.
+#   Print the arguments to StdErr, and log file.
 ###########################################################
 sub Warning($)
 {
     my $msg = shift;
 
-    print($msg);
+    print STDERR $msg;
 
     if (defined($gLogFile)) {
         print $gLogFile $msg;
@@ -380,15 +414,15 @@ sub Warning($)
 
 ###########################################################
 # Log --
-#   Print the arguments to the log-file, and also to the
-#   console if set to be verbose.
+#   Print the arguments to the log-file, and also to StdErr
+#   if set to be verbose.
 ###########################################################
 sub Log($)
 {
     my $msg = shift;
 
     if ($OPTIONS->{verbose}) {
-        print($msg);
+        print STDERR $msg;
     }
 
     if (defined($gLogFile)) {

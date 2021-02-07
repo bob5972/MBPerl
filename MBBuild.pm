@@ -126,11 +126,11 @@ sub Configure(;$)
     }
 
     if ( $^O eq 'linux') {
-        Warning("Linux detected\n");
+        Console("Linux detected\n");
         $gConfig->{'MB_LINUX'} = TRUE;
         $gConfig->{'DEFAULT_CFLAGS'} .= " -D _GNU_SOURCE";
     } elsif ($^O eq 'darwin') {
-        Warning("MacOS detected\n");
+        Console("MacOS detected\n");
         $gConfig->{'MB_MACOS'} = TRUE;
     } else {
         Panic("Unknown OS: $^O\n");
@@ -139,7 +139,7 @@ sub Configure(;$)
     $gConfig->{'DEFAULT_CFLAGS'} .= " -march=native";
 
     if ($gConfig->{'MB_DEVEL'}) {
-        Warning("Enabling devel options\n");
+        Console("Enabling devel options\n");
         $gConfig->{'DEFAULT_CFLAGS'} .= " -Wall -Wextra -Werror -g";
         $gConfig->{'DEFAULT_CFLAGS'} .= " -Wno-attributes";
         $gConfig->{'DEFAULT_CFLAGS'} .= " -Wno-unused-parameter";
@@ -147,16 +147,16 @@ sub Configure(;$)
         $gConfig->{'DEFAULT_CFLAGS'} .= " -Wno-format-truncation";
         $gConfig->{'DEFAULT_CFLAGS'} .= " -Wno-unused-result";
     } else {
-        Warning("Disabling devel options\n");
+        Console("Disabling devel options\n");
     }
 
     if ($gConfig->{'MB_DEBUG'}) {
-        Warning("Enabling debug options\n");
+        Console("Enabling debug options\n");
         $gConfig->{'DEFAULT_CFLAGS'} .= " -Og -g";
         $gConfig->{'DEFAULT_CFLAGS'} .= " -fno-omit-frame-pointer";
         $gConfig->{'DEFAULT_CFLAGS'} .= " -Wno-type-limits";
     } else {
-        Warning("Disabling debug options\n");
+        Console("Disabling debug options\n");
         $gConfig->{'DEFAULT_CFLAGS'} .= " -O2";
         $gConfig->{'DEFAULT_CFLAGS'} .= " -fomit-frame-pointer";
         $gConfig->{'DEFAULT_CFLAGS'} .= " -Wno-unused-variable";
@@ -182,8 +182,8 @@ sub Configure(;$)
         $gConfig->{'CXX'} = $dcxx;
     }
 
-    Warning("Using CC=" . $gConfig->{'CC'} . "\n");
-    Warning("Using CXX=" . $gConfig->{'CXX'} . "\n");
+    Console("Using CC=" . $gConfig->{'CC'} . "\n");
+    Console("Using CXX=" . $gConfig->{'CXX'} . "\n");
 
     # Load defaults from caller
     foreach my $x (keys(%{$callerOpts})) {
@@ -249,5 +249,5 @@ sub Configure(;$)
         Panic("Unused key found in gConfig: $x => " . $gConfig->{$x} . "\n");
     }
 
-    Warning("\nConfigured!\n");
+    Console("\nConfigured!\n");
 }

@@ -47,8 +47,8 @@ $MBBasic::PROGRAM_AUTHOR = "Michael Banack";
 $MBBasic::PROGRAM_COPYRIGHT_DATE = "2005-2021";
 
 sub ExtraUsage() {
-    Warning("Usage: $MBBasic::PROGRAM_NAME [options]\n");
-    Warning("\t$MBBasic::PROGRAM_NAME: Read lines from stdIn and print them without leading/trailing whitespace\n");
+    Console("Usage: $MBBasic::PROGRAM_NAME [options]\n");
+    Console("\t$MBBasic::PROGRAM_NAME: Read lines from stdIn and print them without leading/trailing whitespace\n");
 }
 
 sub Main() {
@@ -59,10 +59,11 @@ sub Main() {
     while($temp=<STDIN>) {
         $temp =~ s/\s+$//g;
         $temp =~ s/^\s+//g;
-        print "$temp\n";
+        Console("$temp\n");
     }
 
     MBBasic::Exit();
+    return 0;
 }
 
 # Call the main routine.
