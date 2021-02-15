@@ -36,7 +36,9 @@ $VERSION     = 1.2;
 @ISA         = qw(Exporter);
 @EXPORT_OK   = qw($PROGRAM_VERSION $PROGRAM_NAME $PROGRAM_AUTHOR
                   $PROGRAM_COPYRIGHT_DATE
-                  &Init &Exit &StatsReport OpenLogFile SetExtraUsage
+                  $SKIP_ARGV $PANIC_STDOUT
+                  &Init &Exit &SetMinimalLibMode
+                  &StatsReport &OpenLogFile &SetExtraUsage
                   $COLOR_OFF $COLOR_BLACK $COLOR_RED $COLOR_GREEN
                   $COLOR_YELLOW $COLOR_BLUE $COLOR_MAGENTA $COLOR_CYAN
                   $COLOR_WHITE $SHELL_COLOR_MAP
@@ -58,6 +60,10 @@ $VERSION     = 1.2;
 
 use constant TRUE => 1;
 use constant FALSE => 0;
+
+# Global options to configure things outside $OPTIONS/Init
+our $SKIP_ARGV = FALSE;
+our $PANIC_STDOUT = TRUE;
 
 # Global variables for help/version messages.
 # (So scripts can override them at the top of their files.
@@ -128,6 +134,21 @@ sub shell_quote { require String::ShellQuote; return String::ShellQuote::shell_q
 
 
 ###########################################################
+# SetMinimalLibMode --
+#   Set options before Init to enable MinimalLib mode.
+#
+#   This is designed for scripts that want to use some
+#   of the MBBasic functions, without being a complete MBBasic
+#   script.
+###########################################################
+sub SetMinimalLibMode()
+{
+    $SKIP_ARGV = TRUE;
+    $PANIC_STDOUT = FALSE;
+}
+
+
+###########################################################
 # Init --
 #   Initialize the library and parse the options.
 ###########################################################
@@ -138,7 +159,11 @@ sub Init()
 
     $gInitialized = TRUE;
 
-    my $optSuccess = ParseOptions(\@ARGV, $OPTIONS, $gOptionList);
+    my $optArr = \@ARGV;
+    if ($SKIP_ARGV) {
+        $optArr = [];
+    }
+    my $optSuccess = ParseOptions($optArr, $OPTIONS, $gOptionList);
 
     if ($OPTIONS->{mergeStdErr}) {
         *STDERR = *STDOUT;
@@ -619,8 +644,10 @@ sub Panic
     $gPanicCount++;
     if ($gPanicCount > 1) {
         if ($gPanicCount <= 2) {
-            print("Panic Loop!\n");
-            print("PANIC: $message\n");
+            if ($PANIC_STDOUT) {
+                print("Panic Loop!\n");
+                print("PANIC: $message\n");
+            }
             Warning("Panic Loop!\n");
             Warning("PANIC: $message\n");
         }
@@ -634,7 +661,9 @@ sub Panic
 
     CloseLogFile();
 
-    print("\nPANIC: $message\n\n");
+    if ($PANIC_STDOUT) {
+        print("\nPANIC: $message\n\n");
+    }
     exit(254);
 }
 
