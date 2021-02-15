@@ -1318,13 +1318,19 @@ sub rpad($$;$)
     return $inp;
 }
 
+
 ###########################################################
 # Text2Html --
 #   Convert text to simple HTML.
 ###########################################################
-sub Text2Html($)
+sub Text2Html($;$)
 {
     my $line = shift;
+    my $tabSize = shift;
+
+    if (!defined($tabSize)) {
+        $tabSize = 4;
+    }
 
     my @links;
     my @emails;
@@ -1336,7 +1342,14 @@ sub Text2Html($)
     $line =~ s/&amp;/ &amp;/g;
     $line =~ s/</ &lt;/g;
     $line =~ s/>/ &gt;/g;
-    $line =~ s/\t/ &nbsp;&nbsp;&nbsp;&nbsp;/g;
+
+    ASSERT($tabSize == 4 || $tabSize == 8);
+    if ($tabSize == 4) {
+        $line =~ s/\t/ &nbsp;&nbsp;&nbsp;&nbsp;/g;
+    } else {
+        $line =~ s/\t/ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/g;
+    }
+
     $line =~ s/\r\n/\n/g;
     $line =~ s/\r|\n/ <br>\n/g;
 
