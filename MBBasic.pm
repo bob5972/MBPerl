@@ -56,7 +56,8 @@ $VERSION     = 1.2;
                   &ArrayContainsString &Sleep
                   &UndefToZero &UndefToEmpty
                   &PushHashValues &SumHashValues
-                  &HyphenString &Trim);
+                  &HyphenString &Trim
+                  &rpad &Text2Html);
 
 use constant TRUE => 1;
 use constant FALSE => 0;
@@ -1262,6 +1263,103 @@ sub ColorStrip($)
         $msg =~ s/$seq//g;
     }
     return $msg;
+}
+
+
+###########################################################
+# lpad --
+#   Pad the provided string to a given length by adding
+#   characters to the left.
+###########################################################
+sub lpad($$;$)
+{
+    my $inp = shift;
+    my $newLength = shift;
+
+    ASSERT(defined($newLength));
+    my $char = shift;
+    if (!defined($char)) {
+        $char = ' ';
+    }
+
+    my $curLength = length($inp);
+    my $i;
+    for($i = $newLength; $i > $curLength; $i--) {
+        $inp = "$char$inp";
+    }
+
+    return $inp;
+}
+
+
+###########################################################
+# rpad --
+#   Pad the provided string to a given length by adding
+#   characters to the right.
+###########################################################
+sub rpad($$;$)
+{
+    my $inp = shift;
+    my $newLength = shift;
+
+    ASSERT(defined($newLength));
+
+    my $char = shift;
+    if (!defined($char)) {
+        $char = ' ';
+    }
+
+    my $curLength = length($inp);
+    my $i;
+    for ($i= $newLength; $i > $curLength; $i--) {
+        $inp = "$inp$char";
+    }
+
+    return $inp;
+}
+
+###########################################################
+# Text2Html --
+#   Convert text to simple HTML.
+###########################################################
+sub Text2Html($)
+{
+    my $line = shift;
+
+    my @links;
+    my @emails;
+    my $email;
+    my $link;
+
+    $line =~ s/&/&amp;/g;
+    $line =~ s/ / &nbsp;/g;
+    $line =~ s/&amp;/ &amp;/g;
+    $line =~ s/</ &lt;/g;
+    $line =~ s/>/ &gt;/g;
+    $line =~ s/\t/ &nbsp;&nbsp;&nbsp;&nbsp;/g;
+    $line =~ s/\r\n/\n/g;
+    $line =~ s/\r|\n/ <br>\n/g;
+
+    while ($line =~ /(http:\/\/[^\s]+)/g) {
+        push @links, $1;
+    }
+    while ($line =~ /(ftp:\/\/[^\s]+)/g) {
+        push @links, $1;
+    }
+    foreach $link (@links) {
+        $line =~ s/$link/<a href=\"$link\">$link<\/a>/;
+    }
+
+    while ($line =~ /([\w\.\d+-]+@[\w\d\.]+\.[\w]{2,4})/g) {
+        push @emails, $1;
+    }
+    foreach $email (@emails) {
+        $line =~ s/$email/<a href=\"mailto:$email\">$email<\/a>/;
+    }
+
+    $line =~ s/ &/&/g;
+
+    return $line;
 }
 
 return 1; # We always load successfully.
