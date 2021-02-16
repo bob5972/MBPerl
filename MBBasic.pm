@@ -57,7 +57,7 @@ $VERSION     = 1.2;
                   &UndefToZero &UndefToEmpty
                   &PushHashValues &SumHashValues
                   &HyphenString &Trim
-                  &rpad &Text2Html);
+                  &rpad &lpad &Text2Html);
 
 use constant TRUE => 1;
 use constant FALSE => 0;
