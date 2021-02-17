@@ -42,7 +42,7 @@ use MBBasic;
 use strict;
 use warnings;
 
-$MBBasic::PROGRAM_VERSION = "1.0";
+$MBBasic::PROGRAM_VERSION = "1.1";
 $MBBasic::PROGRAM_AUTHOR = "Michael Banack";
 $MBBasic::PROGRAM_COPYRIGHT_DATE = "2021";
 
@@ -55,8 +55,11 @@ sub Main() {
     MBBasic::SetExtraUsage(\&ExtraUsage);
     MBBasic::Init();
 
-    my @lines = <>;
-    my $line = @lines[rand($.)];
+    # Avoid storing more than two-lines of the file at at time.
+    my $line;
+    srand;
+    rand($.) < 1 && ($line = $_) while <>;
+
     chomp($line);
     Console("$line\n");
 
