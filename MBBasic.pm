@@ -886,21 +886,31 @@ sub LoadMRegFile($)
 
     my $fh;
     my $line;
+    my $module;
+    my $version;
 
     open($fh, '<', $mregFile) or Panic("Unable to open MReg file", $!);
     $line = <$fh>;
     chomp($line);
-    VERIFY($line =~ /^(MJ?BBasic)::MReg::Version=(\d+)$/,
-           "File does not appear to be an MReg file",
-           "file=$mregFile");
-    my $module = $1;
-    my $version = $2;
-    VERIFY($version >= 0 && $version <= 4);
-    if ($version <= 2) {
-        VERIFY($module eq 'MJBBasic');
+
+    if ($line =~ /^(MJ?BBasic)::MReg::Version=(\d+)$/) {
+        $module = $1;
+        $version = $2;
+        VERIFY($version >= 0 && $version <= 4);
+
+        if ($version <= 2) {
+            VERIFY($module eq 'MJBBasic');
+        } else {
+            VERIFY($module eq 'MBBasic');
+        }
+    } elsif ($line =~ /^MReg::(.*)::Version=5$/) {
+        $module = $1;
+        $version = 5;
     } else {
-        VERIFY($module eq 'MBBasic');
+        Panic("File does not appear to be an MReg file",
+              "file=$mregFile");
     }
+    VERIFY($version >= 0 && $version <= 5);
 
     while (defined($line = <$fh>)) {
         my $key;
@@ -945,7 +955,7 @@ sub SaveMRegFile($$)
 
     my $fh;
     open($fh, '>', $mregFile) or Panic("Unable to open MReg file", $!);
-    print $fh "MBBasic::MReg::Version=4\n";
+    print $fh "MReg::MBBasic::Version=5\n";
     foreach my $key (keys(%{$entries})) {
         my $value = $entries->{$key};
 
