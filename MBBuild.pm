@@ -144,7 +144,9 @@ sub Configure(;$)
         $gConfig->{'DEFAULT_CFLAGS'} .= " -Wno-attributes";
         $gConfig->{'DEFAULT_CFLAGS'} .= " -Wno-unused-parameter";
         $gConfig->{'DEFAULT_CFLAGS'} .= " -Wno-sign-compare";
-        $gConfig->{'DEFAULT_CFLAGS'} .= " -Wno-format-truncation";
+        if (!$gConfig->{'MB_MACOS'}) {
+            $gConfig->{'DEFAULT_CFLAGS'} .= " -Wno-format-truncation";
+        }
         $gConfig->{'DEFAULT_CFLAGS'} .= " -Wno-unused-result";
     } else {
         Console("Disabling devel options\n");
