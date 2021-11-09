@@ -208,7 +208,7 @@ sub Configure(;$)
     open($cHeader, '>', catfile($gConfig->{'BUILDROOT'}, 'config.h')) or Panic($!);
 
     print $cHeader "#ifndef ALLOW_MBBUILD_CONFIG_H\n";
-    print $cHeader "#error Cannot include config.h directly, use mbconfig.h\n";
+    print $cHeader "#error Cannot include config.h directly, use MBConfig.h\n";
     print $cHeader "#endif\n";
 
     # Save Makefile options
