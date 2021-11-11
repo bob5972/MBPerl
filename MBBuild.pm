@@ -95,34 +95,50 @@ sub Configure(;$)
     foreach my $x ('BUILDROOT', 'TMPDIR', 'DEPROOT',
                    'MBLIB_BUILDDIR', 'MBLIB_DEPDIR',
                    'MBLIB_SRCDIR', 'MB_DEBUG', 'DEFAULT_CFLAGS',
-                   'CC', 'CXX') {
+                   'CC', 'CXX', 'MB_HAS_SDL2') {
         if (defined($ENV{$x})) {
             $gConfig->{$x} = $ENV{$x};
         }
     }
 
     # Load dynamic defaults
-    if (!$gConfig->{'TMPDIR'}) {
+    if (!defined($gConfig->{'TMPDIR'})) {
         $gConfig->{'TMPDIR'} = catfile($gConfig->{'BUILDROOT'}, 'tmp');
     }
 
-    if (!$gConfig->{'DEPROOT'}) {
+    if (!defined($gConfig->{'DEPROOT'})) {
         $gConfig->{'DEPROOT'} = catfile($gConfig->{'BUILDROOT'}, 'deps');
     }
 
-    if (!$gConfig->{'MBLIB_BUILDDIR'}) {
+    if (!defined($gConfig->{'MBLIB_BUILDDIR'})) {
         $gConfig->{'MBLIB_BUILDDIR'} =
             catdir($gConfig->{'BUILDROOT'}, $OPTIONS->{'MBLibOutputDirPrefix'});
     }
 
-    if (!$gConfig->{'MBLIB_DEPDIR'}) {
+    if (!defined($gConfig->{'MBLIB_DEPDIR'})) {
         $gConfig->{'MBLIB_DEPDIR'} =
             catdir($gConfig->{'DEPROOT'}, $OPTIONS->{'MBLibOutputDirPrefix'});
     }
 
-    if (!$gConfig->{'MBLIB_SRCDIR'}) {
+    if (!defined($gConfig->{'MBLIB_SRCDIR'})) {
         $gConfig->{'MBLIB_SRCDIR'} =
             catdir('.', $OPTIONS->{'MBLibOutputDirPrefix'});
+    }
+
+    if (!defined($gConfig->{'MB_HAS_SDL2'})) {
+        if (-f '/usr/lib64/libSDL2.so') {
+            Console("SDL2 detected\n");
+            $gConfig->{'MB_HAS_SDL2'} = TRUE;
+        } else {
+            Console("SDL2 not detected\n");
+            $gConfig->{'MB_HAS_SDL2'} = FALSE;
+        }
+    } else {
+        if ($gConfig->{'MB_HAS_SDL2'}) {
+            Console("SDL2 enabled by config\n");
+        } else {
+            Console("SDL2 disabled by config\n");
+        }
     }
 
     if ( $^O eq 'linux') {
@@ -211,18 +227,9 @@ sub Configure(;$)
     print $cHeader "#error Cannot include config.h directly, use MBConfig.h\n";
     print $cHeader "#endif\n";
 
-    # Save Makefile options
-    foreach my $x  ('BUILDROOT', 'TMPDIR', 'DEPROOT',
-                    'MBLIB_BUILDDIR', 'MBLIB_DEPDIR',
-                    'MBLIB_SRCDIR', 'DEFAULT_CFLAGS',
-                    'CC', 'CXX') {
-        print $cMake "$x=" . $gConfig->{$x} . "\n";
-        delete $gConfig->{$x};
-    }
-
     # Save joint MakeFile/Header options
-    foreach my $x ('MB_LINUX', 'MB_MACOS', 'MB_DEBUG', 'MB_DEVEL') {
-        my $lcx = lc($x);
+    foreach my $x ('MB_LINUX', 'MB_MACOS', 'MB_DEBUG', 'MB_DEVEL',
+                   'MB_HAS_SDL2') {
         if (defined($gConfig->{$x})) {
             ASSERT($gConfig->{$x} eq '1' || $gConfig->{$x} eq '0');
 
@@ -233,6 +240,15 @@ sub Configure(;$)
             }
         }
 
+        delete $gConfig->{$x};
+    }
+
+    # Save Makefile-only options
+    foreach my $x  ('BUILDROOT', 'TMPDIR', 'DEPROOT',
+                    'MBLIB_BUILDDIR', 'MBLIB_DEPDIR',
+                    'MBLIB_SRCDIR', 'DEFAULT_CFLAGS',
+                    'CC', 'CXX') {
+        print $cMake "$x=" . $gConfig->{$x} . "\n";
         delete $gConfig->{$x};
     }
 
