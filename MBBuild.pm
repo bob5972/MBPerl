@@ -255,8 +255,12 @@ sub Configure(;$)
     # Save caller defines
     foreach my $x (@defines) {
         if (defined($gConfig->{$x})) {
+            ASSERT($gConfig->{$x} eq '1' || $gConfig->{$x} eq '0');
+
             print $cMake "$x=" . $gConfig->{$x} . "\n";
-            print $cHeader "#define $x " . $gConfig->{$x} . "\n";
+            if ($gConfig->{$x} eq '1') {
+                print $cHeader "#define $x " . $gConfig->{$x} . "\n";
+            }
         }
 
         delete $gConfig->{$x};
