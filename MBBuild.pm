@@ -126,7 +126,8 @@ sub Configure(;$)
     }
 
     if (!defined($gConfig->{'MB_HAS_SDL2'})) {
-        if (-f '/usr/lib64/libSDL2.so') {
+        if (-f '/usr/lib64/libSDL2.so' ||
+            -f '/usr/lib/x86_64-linux-gnu/libSDL2.so') {
             Console("SDL2 detected\n");
             $gConfig->{'MB_HAS_SDL2'} = TRUE;
         } else {
