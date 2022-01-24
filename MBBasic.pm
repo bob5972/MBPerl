@@ -956,7 +956,7 @@ sub SaveMRegFile($$)
     my $fh;
     open($fh, '>', $mregFile) or Panic("Unable to open MReg file", $!);
     print $fh "MReg::MBBasic::Version=5\n";
-    foreach my $key (keys(%{$entries})) {
+    foreach my $key (sort keys(%{$entries})) {
         my $value = $entries->{$key};
 
         ASSERT($key !~ /\R/, "MReg key can't contain newlines");
