@@ -872,25 +872,24 @@ sub average(@)
 }
 
 ###########################################################
-# LoadMRegFile --
-#   Loads an "MReg" file into a hash table.
-#   An "MReg" file is a key-value store of strings.
+# LoadMRegLines --
+#   Loads an "MReg" from an arrayref of lines into a hash table.
 #   Returns a hashref of the key-value pairs.
 ###########################################################
-sub LoadMRegFile($)
+sub LoadMRegLines($)
 {
-    my $mregFile = shift;
-    my $entries = {};
+    my $mregLines = shift;
 
-    VERIFY(-f $mregFile);
+    ASSERT(ref($mregLines) eq 'ARRAY');
+
+    my $entries = {};
 
     my $fh;
     my $line;
     my $module;
     my $version;
 
-    open($fh, '<', $mregFile) or Panic("Unable to open MReg file", $!);
-    $line = <$fh>;
+    $line = shift @{$mregLines};
     chomp($line);
 
     if ($line =~ /^(MJ?BBasic)::MReg::Version=(\d+)$/) {
@@ -907,12 +906,11 @@ sub LoadMRegFile($)
         $module = $1;
         $version = 5;
     } else {
-        Panic("File does not appear to be an MReg file",
-              "file=$mregFile");
+        Panic("Lines do not appear to be in MReg format");
     }
     VERIFY($version >= 0 && $version <= 5);
 
-    while (defined($line = <$fh>)) {
+    while (defined($line = shift @{$mregLines})) {
         my $key;
         my $value;
         chomp($line);
@@ -935,9 +933,38 @@ sub LoadMRegFile($)
             Panic("Malformatted line", "line=$line");
         }
     }
-    close($fh);
 
     return $entries;
+}
+
+###########################################################
+# LoadMRegFile --
+#   Loads an "MReg" file into a hash table.
+#   An "MReg" file is a key-value store of strings.
+#   Returns a hashref of the key-value pairs.
+###########################################################
+sub LoadMRegFile($)
+{
+    my $mregFile = shift;
+
+    VERIFY(-f $mregFile);
+
+    my $fh;
+
+    open($fh, '<', $mregFile) or Panic("Unable to open MReg file", $!);
+    my $line = <$fh>;
+    close($fh);
+
+    if ($line !~ /^(MJ?BBasic)::MReg::Version=(\d+)$/ &&
+        $line !~ /^MReg::(.*)::Version=5$/) {
+        Panic("File does not appear to be in MReg format", "file=$mregFile");
+    }
+
+    open($fh, '<', $mregFile) or Panic("Unable to open MReg file", $!);
+    my @mregLines = <$fh>;
+    close($fh);
+
+    return LoadMRegLines(\@mregLines);
 }
 
 
