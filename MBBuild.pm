@@ -94,7 +94,8 @@ sub Configure(;$)
     # Load environment defaults
     foreach my $x ('BUILDROOT', 'TMPDIR', 'DEPROOT',
                    'MBLIB_BUILDDIR', 'MBLIB_DEPDIR',
-                   'MBLIB_SRCDIR', 'MB_DEBUG', 'DEFAULT_CFLAGS',
+                   'MBLIB_SRCDIR', 'MB_DEBUG', 'MB_DEVEL',
+                   'DEFAULT_CFLAGS',
                    'CC', 'CXX', 'MB_HAS_SDL2') {
         if (defined($ENV{$x})) {
             $gConfig->{$x} = $ENV{$x};
