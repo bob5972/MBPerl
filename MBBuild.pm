@@ -208,6 +208,7 @@ sub Configure($;$$$)
         $gConfig->{'DEFAULT_CFLAGS'} .= " -Wno-unused-result";
     } else {
         Console("Disabling devel options\n");
+        $gConfig->{'DEFAULT_CFLAGS'} .= " -Wno-unused-result";
     }
 
     if ($gConfig->{'MB_DEBUG'}) {
@@ -313,7 +314,7 @@ sub Configure($;$$$)
     }
 
     # Save caller defines
-    foreach my $x (@defines) {
+    foreach my $x (sort @defines) {
         if (defined($gConfig->{$x})) {
             ASSERT($gConfig->{$x} eq '1' || $gConfig->{$x} eq '0');
 
@@ -331,7 +332,7 @@ sub Configure($;$$$)
 
     # See if we've changed the config
     if (compare($cHeaderPath, $cHeaderNewPath) != 0) {
-        copy($cHeaderNewPath, $cHeaderPath);
+        move($cHeaderNewPath, $cHeaderPath);
     }
 
     # Check for unused keys
