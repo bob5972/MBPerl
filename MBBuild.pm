@@ -79,8 +79,9 @@ sub Exit()
 # Configure --
 #   Clean up anything on the way out.
 ###########################################################
-sub Configure(;$$)
+sub Configure(;$$$)
 {
+    my $callerBareOptions = shift;
     my $callerConfig = shift;
     my $callerDefines = shift;
 
@@ -97,6 +98,19 @@ sub Configure(;$$)
         $gConfig->{'BUILDTYPE'} = $OPTIONS->{buildType};
     } else {
         $gConfig->{'BUILDTYPE'} = 'release';
+    }
+
+    # Load bareOpts
+    ASSERT(!defined($callerBareOptions) || ref($callerBareOptions) eq 'ARRAY');
+    if (defined($callerBareOptions) && ArrayLen($callerBareOptions) > 0) {
+        VERIFY(ArrayLen($callerBareOptions) == 1, 'Too many bareOpts');
+        my $bare = $callerBareOptions->[0];
+
+        if ($bare =~ /^debug|develperf|release$/) {
+            $gConfig->{'BUILDTYPE'} = $bare;
+        } else {
+            Panic("Unknown bare option: $bare\n");
+        }
     }
 
     # Load callerConfig
