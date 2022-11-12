@@ -77,9 +77,10 @@ sub Exit()
 # Configure --
 #   Clean up anything on the way out.
 ###########################################################
-sub Configure(;$)
+sub Configure(;$$)
 {
     my $callerOpts = shift;
+    my $callerCFlags = shift;
 
     ASSERT(!defined($callerOpts) || ref($callerOpts) eq 'HASH');
     ASSERT($gInitialized);
@@ -210,6 +211,7 @@ sub Configure(;$)
         $gConfig->{$x} = $callerOpts->{$x};
         push(@defines, $x);
     }
+    $gConfig->{'DEFAULT_CFLAGS'} .= $callerCFlags;
 
     if ($OPTIONS->{'verbose'}) {
         Dump($gConfig);
