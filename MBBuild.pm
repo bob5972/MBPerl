@@ -211,7 +211,7 @@ sub Configure(;$$)
         $gConfig->{$x} = $callerOpts->{$x};
         push(@defines, $x);
     }
-    $gConfig->{'DEFAULT_CFLAGS'} .= $callerCFlags;
+    $gConfig->{'DEFAULT_CFLAGS'} .= " " . $callerCFlags;
 
     if ($OPTIONS->{'verbose'}) {
         Dump($gConfig);
