@@ -2,7 +2,7 @@
 #
 # MBBuild.pm -- part of MBPerl
 #
-# Copyright (c) 2021 Michael Banack <github@banack.net>
+# Copyright (c) 2021-2022 Michael Banack <github@banack.net>
 #
 # MIT License
 #
@@ -36,12 +36,14 @@ use File::Path qw(make_path);
 use Exporter();
 our ($VERSION, @ISA, @EXPORT, @EXPORT_OK);
 # set the version for version checking
-$VERSION     = 1.0;
+$VERSION     = 1.01;
 @ISA         = qw(Exporter);
 @EXPORT_OK   = qw(&Init &Exit &Configure);
 @EXPORT      = qw();
 
 my $gBuildOptions = {
+    "buildType=s" => { desc => "Build Type: debug/develperf/release",
+                       default => 'release', },
     "useClang!" => { desc => "Use Clang as the compiler?",
                      default => FALSE, },
     "MBLibOutputDirPrefix=s" => { desc => "Prefix for MBLib output dirs",
@@ -77,19 +79,46 @@ sub Exit()
 # Configure --
 #   Clean up anything on the way out.
 ###########################################################
-sub Configure(;$)
+sub Configure(;$$)
 {
-    my $callerOpts = shift;
+    my $callerConfig = shift;
+    my $callerDefines = shift;
 
-    ASSERT(!defined($callerOpts) || ref($callerOpts) eq 'HASH');
+    ASSERT(!defined($callerConfig) || ref($callerConfig) eq 'HASH');
+    ASSERT(!defined($callerDefines) || ref($callerDefines) eq 'HASH');
     ASSERT($gInitialized);
 
     my @defines;
 
     # Load static defaults
     $gConfig->{'BUILDROOT'} = 'build';
-    $gConfig->{'MB_DEBUG'} = TRUE;
-    $gConfig->{'MB_DEVEL'} = TRUE;
+
+    if (defined($OPTIONS->{buildType})) {
+        $gConfig->{'BUILDTYPE'} = $OPTIONS->{buildType};
+    } else {
+        $gConfig->{'BUILDTYPE'} = 'release';
+    }
+
+    # Load callerConfig
+    if (defined($callerConfig)) {
+        foreach my $x (keys(%{$callerConfig})) {
+            $gConfig->{$x} = $callerConfig->{$x};
+        }
+    }
+
+    Console("Build Type: $gConfig->{'BUILDTYPE'}\n");
+    if ($gConfig->{'BUILDTYPE'} eq "debug") {
+        $gConfig->{'MB_DEBUG'} = TRUE;
+        $gConfig->{'MB_DEVEL'} = TRUE;
+    } elsif ($gConfig->{'BUILDTYPE'} eq "develperf") {
+        $gConfig->{'MB_DEBUG'} = FALSE;
+        $gConfig->{'MB_DEVEL'} = TRUE;
+    } elsif ($gConfig->{'BUILDTYPE'} eq "release") {
+        $gConfig->{'MB_DEBUG'} = FALSE;
+        $gConfig->{'MB_DEVEL'} = FALSE;
+    } else {
+        Panic("Unknown buildType: $gConfig->{'BUILDTYPE'}\n");
+    }
 
     # Load environment defaults
     foreach my $x ('BUILDROOT', 'TMPDIR', 'DEPROOT',
@@ -206,12 +235,12 @@ sub Configure(;$)
     Console("Using CXX=" . $gConfig->{'CXX'} . "\n");
 
     # Load defaults from caller
-    foreach my $x (keys(%{$callerOpts})) {
-        $gConfig->{$x} = $callerOpts->{$x};
+    foreach my $x (keys(%{$callerDefines})) {
+        $gConfig->{$x} = $callerDefines->{$x};
         push(@defines, $x);
     }
-    if (defined($callerOpts->{'PROJECT_CFLAGS'})) {
-        $gConfig->{'DEFAULT_CFLAGS'} .= " " . $callerOpts->{'PROJECT_CFLAGS'};
+    if (defined($gConfig->{'PROJECT_CFLAGS'})) {
+        $gConfig->{'DEFAULT_CFLAGS'} .= " " . $gConfig->{'PROJECT_CFLAGS'};
     }
     delete $gConfig->{'PROJECT_CFLAGS'};
 
@@ -250,7 +279,7 @@ sub Configure(;$)
     }
 
     # Save Makefile-only options
-    foreach my $x  ('BUILDROOT', 'TMPDIR', 'DEPROOT',
+    foreach my $x  ('BUILDROOT', 'BUILDTYPE', 'TMPDIR', 'DEPROOT',
                     'MBLIB_BUILDDIR', 'MBLIB_DEPDIR',
                     'MBLIB_SRCDIR', 'DEFAULT_CFLAGS',
                     'CC', 'CXX') {
