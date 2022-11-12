@@ -32,6 +32,8 @@ use warnings;
 
 use MBBasic;
 use File::Path qw(make_path);
+use File::Copy;
+use File::Compare;
 
 use Exporter();
 our ($VERSION, @ISA, @EXPORT, @EXPORT_OK);
@@ -120,6 +122,7 @@ sub Configure(;$$$)
         }
     }
 
+    # Load buildType defaults
     Console("Build Type: $gConfig->{'BUILDTYPE'}\n");
     if ($gConfig->{'BUILDTYPE'} eq "debug") {
         $gConfig->{'MB_DEBUG'} = TRUE;
@@ -134,16 +137,8 @@ sub Configure(;$$$)
         Panic("Unknown buildType: $gConfig->{'BUILDTYPE'}\n");
     }
 
-    # Load environment defaults
-    foreach my $x ('BUILDROOT', 'TMPDIR', 'DEPROOT',
-                   'MBLIB_BUILDDIR', 'MBLIB_DEPDIR',
-                   'MBLIB_SRCDIR', 'MB_DEBUG', 'MB_DEVEL',
-                   'DEFAULT_CFLAGS',
-                   'CC', 'CXX', 'MB_HAS_SDL2') {
-        if (defined($ENV{$x})) {
-            $gConfig->{$x} = $ENV{$x};
-        }
-    }
+    $gConfig->{'BUILDTYPE_ROOT'} = catdir($gConfig->{'BUILDROOT'},
+                                          $gConfig->{'BUILDTYPE'});
 
     # Load dynamic defaults
     if (!defined($gConfig->{'TMPDIR'})) {
@@ -151,12 +146,13 @@ sub Configure(;$$$)
     }
 
     if (!defined($gConfig->{'DEPROOT'})) {
-        $gConfig->{'DEPROOT'} = catfile($gConfig->{'BUILDROOT'}, 'deps');
+        $gConfig->{'DEPROOT'} = catfile($gConfig->{'BUILDTYPE_ROOT'}, 'deps');
     }
 
     if (!defined($gConfig->{'MBLIB_BUILDDIR'})) {
         $gConfig->{'MBLIB_BUILDDIR'} =
-            catdir($gConfig->{'BUILDROOT'}, $OPTIONS->{'MBLibOutputDirPrefix'});
+            catdir($gConfig->{'BUILDTYPE_ROOT'},
+                   $OPTIONS->{'MBLibOutputDirPrefix'});
     }
 
     if (!defined($gConfig->{'MBLIB_DEPDIR'})) {
@@ -269,8 +265,10 @@ sub Configure(;$$$)
 
     my $cMake;
     my $cHeader;
+    my $cHeaderNewPath = catfile($gConfig->{'BUILDTYPE_ROOT'}, 'config.h.new');
+    my $cHeaderPath = catfile($gConfig->{'BUILDTYPE_ROOT'}, 'config.h');
     open($cMake, '>', 'config.mk') or Panic($!);
-    open($cHeader, '>', catfile($gConfig->{'BUILDROOT'}, 'config.h')) or Panic($!);
+    open($cHeader, '>', $cHeaderNewPath) or Panic($!);
 
     print $cHeader "#ifndef ALLOW_MBBUILD_CONFIG_H\n";
     print $cHeader "#error Cannot include config.h directly, use MBConfig.h\n";
@@ -293,7 +291,8 @@ sub Configure(;$$$)
     }
 
     # Save Makefile-only options
-    foreach my $x  ('BUILDROOT', 'BUILDTYPE', 'TMPDIR', 'DEPROOT',
+    foreach my $x  ('BUILDROOT', 'BUILDTYPE', 'BUILDTYPE_ROOT',
+                    'TMPDIR', 'DEPROOT',
                     'MBLIB_BUILDDIR', 'MBLIB_DEPDIR',
                     'MBLIB_SRCDIR', 'DEFAULT_CFLAGS',
                     'CC', 'CXX') {
@@ -313,6 +312,14 @@ sub Configure(;$$$)
         }
 
         delete $gConfig->{$x};
+    }
+
+    close($cMake);
+    close($cHeader);
+
+    # See if we've changed the config
+    if (compare($cHeaderPath, $cHeaderNewPath) != 0) {
+        copy($cHeaderNewPath, $cHeaderPath);
     }
 
     # Check for unused keys
