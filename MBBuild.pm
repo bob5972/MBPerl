@@ -38,7 +38,7 @@ use File::Compare;
 use Exporter();
 our ($VERSION, @ISA, @EXPORT, @EXPORT_OK);
 # set the version for version checking
-$VERSION     = 1.01;
+$VERSION     = $MBBasic::VERSION;
 @ISA         = qw(Exporter);
 @EXPORT_OK   = qw(&Init &Exit &Configure);
 @EXPORT      = qw();
@@ -81,8 +81,9 @@ sub Exit()
 # Configure --
 #   Clean up anything on the way out.
 ###########################################################
-sub Configure(;$$$)
+sub Configure($;$$$)
 {
+    my $callerTargets = shift;
     my $callerBareOptions = shift;
     my $callerConfig = shift;
     my $callerDefines = shift;
@@ -256,6 +257,17 @@ sub Configure(;$$$)
 
     if ($OPTIONS->{'verbose'}) {
         Dump($gConfig);
+    }
+
+    # Make symlinks
+    ASSERT(!defined($callerTargets) || ref($callerTargets) eq 'ARRAY');
+    if (defined($callerTargets) && ArrayLen($callerTargets) > 0) {
+        foreach my $t (@{$callerTargets}) {
+            my $link = catfile($gConfig->{'BUILDROOT'}, $t);
+            my $target = catfile($gConfig->{'BUILDTYPE'}, $t);
+            unlink($link);
+            symlink($target, $link);
+        }
     }
 
     #Open files

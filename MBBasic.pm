@@ -32,7 +32,7 @@ use warnings;
 
 use Exporter();
 our ($VERSION, @ISA, @EXPORT, @EXPORT_OK);
-$VERSION     = 1.2;
+$VERSION     = 1.21;
 @ISA         = qw(Exporter);
 @EXPORT_OK   = qw($PROGRAM_VERSION $PROGRAM_NAME $PROGRAM_AUTHOR
                   $PROGRAM_COPYRIGHT_DATE
