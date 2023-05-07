@@ -260,7 +260,7 @@ sub Configure($;$$$)
         Dump($gConfig);
     }
 
-    # Make symlinks
+    # Make target symlinks
     ASSERT(!defined($callerTargets) || ref($callerTargets) eq 'ARRAY');
     if (defined($callerTargets) && ArrayLen($callerTargets) > 0) {
         foreach my $t (@{$callerTargets}) {
@@ -270,6 +270,12 @@ sub Configure($;$$$)
             symlink($target, $link);
         }
     }
+
+    # Make buildtree symlinks
+    my $link = catfile($gConfig->{'BUILDROOT'}, 'current');
+    my $tree = $gConfig->{'BUILDTYPE'};
+    unlink($link);
+    symlink($tree, $link);
 
     #Open files
     make_path($gConfig->{'MBLIB_BUILDDIR'});
