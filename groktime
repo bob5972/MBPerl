@@ -62,7 +62,8 @@ sub ExtraUsage() {
 my $DC = 1.0 / 60 / 60 / 24;
 
 my $gUnits = [
-    ['nanoseconds',  'ns', 1000 * 1000.0],
+    ['nanoseconds',  'ns', 1000 * 1000 * 1000.0],
+    ['microseconds', 'us', 1000 * 1000.0],
     ['milliseconds', 'ms', 1000.0],
     ['seconds',       's', 1.0],
     ['minutes',       'm', 1.0 / 60],
@@ -75,49 +76,49 @@ my $gUnits = [
 
 sub GetConvFromSeconds($) {
     my $name = shift;
-    
+
     for my $x (@{$gUnits}) {
         my $u = $x->[0];
         my $a = $x->[1];
         my $conv = $x->[2];
-        
+
         if ($name eq $u || $name eq $a) {
             return $conv;
         }
     }
-    
+
     Panic("Unknown unit/suffix: $name");
 }
 
 sub ConvToSeconds($$) {
     my $value = shift;
     my $unit = shift;
-    
+
     my $c = GetConvFromSeconds($unit);
-    
+
     return $value / $c;
 }
 
 sub ParseTime($) {
     my $spec = shift;
-    
+
     my $t = 0;
-    
+
     while ($spec) {
         if ($spec =~ /^\s*(\d+(?:\.\d+)?)\s*([a-zA-Z]*)\s*(.*)$/) {
             my $value = $1;
             my $unit = $2;
             $spec = $3;
-            
+
             $t += ConvToSeconds($value, $unit);
         } else {
             Panic("Bad timespec: $spec");
         }
     }
-    
+
     return $t;
 }
-    
+
 sub Main() {
     MBBasic::SetExtraUsage(\&ExtraUsage);
     MBBasic::LoadOptions($gScriptOptions, 'groktime');
@@ -131,7 +132,7 @@ sub Main() {
     my $rawSeconds = 0;
 
     $rawSeconds = ParseTime($inputTime);
-    
+
     for my $x (@{$gUnits}) {
         my $u = $x->[0];
         my $a = $x->[1];
@@ -145,7 +146,7 @@ sub Main() {
             Console("$t $u\n");
         }
     }
-    
+
     MBBasic::Exit();
     return 0;
 }
