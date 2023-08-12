@@ -142,7 +142,7 @@ sub Main() {
         $t = $rawSeconds * $conv;
         if (($conv <= 1.0 && $t > 0.1) ||
             ($conv >= 1.0 && $rawSeconds <= 1.0)) {
-            $t = sprintf("%12.1f", $t);
+            $t = sprintf("%12.2f", $t);
             Console("$t $u\n");
         }
     }
