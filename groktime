@@ -51,13 +51,73 @@ $MBBasic::PROGRAM_COPYRIGHT_DATE = "2023";
 my $gScriptOptions = { };
 
 sub ExtraUsage() {
-    Console("Usage: groktime pattern\n");
+    Console("Usage:  groktime pattern\n");
     Console("\tgroktime: Convert time units\n");
     Console("Examples:\n");
     Console("\tgroktime 1000s\n");
-    Console("\tgroktime 10m40s\n");
+    Console("\tgroktime 100years\n");
+    Console("\tgroktime 1Y2M3W4d5h6m7s8ms9ns\n");
 }
 
+my $DC = 1.0 / 60 / 60 / 24;
+
+my $gUnits = [
+    ['nanoseconds',  'ns', 1000 * 1000.0],
+    ['milliseconds', 'ms', 1000.0],
+    ['seconds',       's', 1.0],
+    ['minutes',       'm', 1.0 / 60],
+    ['hours',         'h', 1.0 / 60 / 60],
+    ['days',          'd', $DC],
+    ['weeks',         'W', $DC / 7],
+    ['months',        'M', $DC / 30.436875],
+    ['years',         'Y', $DC / 365.25],
+];
+
+sub GetConvFromSeconds($) {
+    my $name = shift;
+    
+    for my $x (@{$gUnits}) {
+        my $u = $x->[0];
+        my $a = $x->[1];
+        my $conv = $x->[2];
+        
+        if ($name eq $u || $name eq $a) {
+            return $conv;
+        }
+    }
+    
+    Panic("Unknown unit/suffix: $name");
+}
+
+sub ConvToSeconds($$) {
+    my $value = shift;
+    my $unit = shift;
+    
+    my $c = GetConvFromSeconds($unit);
+    
+    return $value / $c;
+}
+
+sub ParseTime($) {
+    my $spec = shift;
+    
+    my $t = 0;
+    
+    while ($spec) {
+        if ($spec =~ /^\s*(\d+(?:\.\d+)?)\s*([a-zA-Z]*)\s*(.*)$/) {
+            my $value = $1;
+            my $unit = $2;
+            $spec = $3;
+            
+            $t += ConvToSeconds($value, $unit);
+        } else {
+            Panic("Bad timespec: $spec");
+        }
+    }
+    
+    return $t;
+}
+    
 sub Main() {
     MBBasic::SetExtraUsage(\&ExtraUsage);
     MBBasic::LoadOptions($gScriptOptions, 'groktime');
@@ -68,53 +128,22 @@ sub Main() {
     my $inputTime = $OPTIONS->{bareOptions}->[0];
     VERIFY($inputTime, "No timespec!");
 
-    my $rawSeconds;
+    my $rawSeconds = 0;
 
-    #$rawSeconds = ParseTime($inputTime);
-    if ($inputTime =~ /^(\d+)s?$/) {
-        $rawSeconds = $1;
-    } else {
-        Panic("Bad timespec");
-    }
-    my $t;
+    $rawSeconds = ParseTime($inputTime);
+    
+    for my $x (@{$gUnits}) {
+        my $u = $x->[0];
+        my $a = $x->[1];
+        my $conv = $x->[2];
+        my $t;
 
-    $t = sprintf("%0.1f", $rawSeconds);
-    Console("$t seconds\n");
-
-    $t = $rawSeconds / 60;
-    if ($t > 1.0) {
-        $t = sprintf("%0.1f", $t);
-        Console("$t minutes\n");
-    }
-    
-    $t = $rawSeconds / 60 / 60;
-    if ($t > 1.0) {
-        $t = sprintf("%0.1f", $t);
-        Console("$t hours\n");
-    }
-
-    $t = $rawSeconds / 60 / 60 / 24;
-    if ($t > 1.0) {
-        $t = sprintf("%0.1f", $t);
-        Console("$t days\n");
-    }
-    
-    $t = $rawSeconds / 60 / 60 / 24 / 7;
-    if ($t > 1.0) {
-        $t = sprintf("%0.1f", $t);
-        Console("$t weeks\n");
-    }
-    
-    $t = $rawSeconds / 60 / 60 / 24 / 30.436875;
-    if ($t > 1.0) {
-        $t = sprintf("%0.1f", $t);
-        Console("$t months\n");
-    }
-    
-    $t = $rawSeconds / 60 / 60 / 24 / 365.25;
-    if ($t > 1.0) {
-        $t = sprintf("%0.1f", $t);
-        Console("$t years\n");
+        $t = $rawSeconds * $conv;
+        if (($conv <= 1.0 && $t > 0.1) ||
+            ($conv >= 1.0 && $rawSeconds <= 1.0)) {
+            $t = sprintf("%12.1f", $t);
+            Console("$t $u\n");
+        }
     }
     
     MBBasic::Exit();
