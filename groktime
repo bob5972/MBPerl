@@ -78,18 +78,45 @@ sub Main() {
     }
     my $t;
 
-    $t = sprintf("%f", $rawSeconds);
-    Console("$t seconds.\n");
+    $t = sprintf("%0.1f", $rawSeconds);
+    Console("$t seconds\n");
 
-    $t = sprintf("%f", $rawSeconds / 60);
-    Console("$t minutes.\n");
+    $t = $rawSeconds / 60;
+    if ($t > 1.0) {
+        $t = sprintf("%0.1f", $t);
+        Console("$t minutes\n");
+    }
+    
+    $t = $rawSeconds / 60 / 60;
+    if ($t > 1.0) {
+        $t = sprintf("%0.1f", $t);
+        Console("$t hours\n");
+    }
 
-    $t = sprintf("%f", $rawSeconds / 60 / 60);
-    Console("$t hours.\n");
-
-    $t = sprintf("%f", $rawSeconds / 60 / 60 / 24);
-    Console("$t days.\n");
-
+    $t = $rawSeconds / 60 / 60 / 24;
+    if ($t > 1.0) {
+        $t = sprintf("%0.1f", $t);
+        Console("$t days\n");
+    }
+    
+    $t = $rawSeconds / 60 / 60 / 24 / 7;
+    if ($t > 1.0) {
+        $t = sprintf("%0.1f", $t);
+        Console("$t weeks\n");
+    }
+    
+    $t = $rawSeconds / 60 / 60 / 24 / 30.436875;
+    if ($t > 1.0) {
+        $t = sprintf("%0.1f", $t);
+        Console("$t months\n");
+    }
+    
+    $t = $rawSeconds / 60 / 60 / 24 / 365.25;
+    if ($t > 1.0) {
+        $t = sprintf("%0.1f", $t);
+        Console("$t years\n");
+    }
+    
     MBBasic::Exit();
     return 0;
 }
