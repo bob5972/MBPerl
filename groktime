@@ -48,7 +48,10 @@ $MBBasic::PROGRAM_VERSION = "1.0";
 $MBBasic::PROGRAM_AUTHOR = "Michael Banack";
 $MBBasic::PROGRAM_COPYRIGHT_DATE = "2023";
 
-my $gScriptOptions = { };
+my $gScriptOptions = {
+    "all|a!" => { desc => "Print all units",
+                  default => FALSE, },
+};
 
 sub ExtraUsage() {
     Console("Usage:  groktime pattern\n");
@@ -140,7 +143,8 @@ sub Main() {
         my $t;
 
         $t = $rawSeconds * $conv;
-        if (($conv <= 1.0 && $t > 0.1) ||
+        if ($OPTIONS->{all} ||
+            ($conv <= 1.0 && $t > 0.1) ||
             ($conv >= 1.0 && $rawSeconds <= 1.0)) {
             $t = sprintf("%12.2f", $t);
             Console("$t $u\n");
