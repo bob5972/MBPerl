@@ -81,6 +81,4 @@ verbose = 9
 [-RegularExpressions::ProhibitSingleCharAlternation]
 [-RegularExpressions::ProhibitUnusedCapture]
 [-Subroutines::RequireArgUnpacking]
-[-InputOutput::ProhibitTwoArgOpen]
 [-ValuesAndExpressions::ProhibitEscapedCharacters]
-[-InputOutput::RequireCheckedOpen]

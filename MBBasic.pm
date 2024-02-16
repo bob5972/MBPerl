@@ -2,7 +2,7 @@
 #
 # MBBasic.pm -- part of MBPerl
 #
-# Copyright (c) 2021 Michael Banack <github@banack.net>
+# Copyright (c) 2021-2024 Michael Banack <github@banack.net>
 #
 # MIT License
 #
@@ -32,7 +32,7 @@ use warnings;
 
 use Exporter();
 our ($VERSION, @ISA, @EXPORT, @EXPORT_OK);
-$VERSION     = 1.21;
+$VERSION     = 1.22;
 @ISA         = qw(Exporter);
 @EXPORT_OK   = qw($PROGRAM_VERSION $PROGRAM_NAME $PROGRAM_AUTHOR
                   $PROGRAM_COPYRIGHT_DATE
@@ -171,7 +171,7 @@ sub Init()
     }
 
     if ($OPTIONS->{muteStdOut}) {
-        open STDOUT, '>/dev/null' or Panic("Can't open /dev/null: $!");
+        open(STDOUT, '>', '/dev/null') or Panic("Can't open /dev/null: $!");
     }
 
     if (!$optSuccess || $OPTIONS->{help} || $OPTIONS->{usage}) {

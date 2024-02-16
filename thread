@@ -82,7 +82,8 @@ sub Main() {
         $cmd = $workCmd;
 
         if ($OPTIONS->{'stdin'}) {
-            open my $fh, "| $cmd";
+            my $fh;
+            open($fh, "|-", $cmd) or Panic("Unable to run cmd\n");
             print $fh $line;
             close($fh);
         } else {

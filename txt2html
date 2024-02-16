@@ -2,7 +2,7 @@
 #
 # txt2html -- part of MBPerl
 #
-# Copyright (c) 2005-2021 Michael Banack <github@banack.net>
+# Copyright (c) 2005-2024 Michael Banack <github@banack.net>
 #
 # MIT License
 #
@@ -44,7 +44,7 @@ use warnings;
 
 $MBBasic::PROGRAM_VERSION = "1.2";
 $MBBasic::PROGRAM_AUTHOR = "Michael Banack";
-$MBBasic::PROGRAM_COPYRIGHT_DATE = "2021";
+$MBBasic::PROGRAM_COPYRIGHT_DATE = "2005-2024";
 
 sub ExtraUsage() {
     Console("Usage: $MBBasic::PROGRAM_NAME [options]\n");
