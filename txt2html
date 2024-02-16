@@ -57,7 +57,7 @@ sub Main() {
 
     my $line;
     while($line = <STDIN>) {
-        print &Text2Html($line);
+        print Text2Html($line);
     }
 
     MBBasic::Exit();

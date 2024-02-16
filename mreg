@@ -60,7 +60,6 @@ my $searchKey;
 my $putKey;
 my $putValue;
 my $modified = FALSE;
-my $dumpF;
 my $initF;
 
 sub ExtraUsage() {

@@ -245,7 +245,7 @@ sub ParseOptions($$$)
 
     Getopt::Long::Configure("bundling");
     if (!Getopt::Long::GetOptionsFromArray($optArray, $optOut,
-                                           keys(%$optList))) {
+                                           keys(%{$optList}))) {
         return FALSE;
     }
 
@@ -1215,7 +1215,7 @@ sub HyphenString($)
     }
 
     my @partial;
-    my $str = "-";
+    my $str = '-';
     my $l = 1;
 
     while ($l < $n) {
@@ -1371,8 +1371,6 @@ sub Text2Html($;$)
 
     my @links;
     my @emails;
-    my $email;
-    my $link;
 
     $line =~ s/&/&amp;/g;
     $line =~ s/ / &nbsp;/g;
@@ -1396,14 +1394,14 @@ sub Text2Html($;$)
     while ($line =~ /(ftp:\/\/[^\s]+)/g) {
         push @links, $1;
     }
-    foreach $link (@links) {
+    foreach my $link (@links) {
         $line =~ s/$link/<a href=\"$link\">$link<\/a>/;
     }
 
     while ($line =~ /([\w\.\d+-]+@[\w\d\.]+\.[\w]{2,4})/g) {
         push @emails, $1;
     }
-    foreach $email (@emails) {
+    foreach my $email (@emails) {
         $line =~ s/$email/<a href=\"mailto:$email\">$email<\/a>/;
     }
 

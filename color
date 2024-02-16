@@ -110,16 +110,16 @@ sub Main() {
 
         if($arg =~ s/^-//) 	{
             #Argument starts with -
-            if ($arg =~ /^k$/) {
+            if ($arg eq 'k') {
                 $killExistingColors=1;
-            } elsif ($arg =~ /^c$/) {
+            } elsif ($arg eq 'c') {
                 $i++;
                 if($i > $argc) {
                     Panic("Syntax Error: Expected: color");
                 }
                 $defaultColor=GetColorValue($argv->[$i]);
                 $useDefaultColor=1;
-            } elsif($arg=~ /^m$/) {
+            } elsif($arg eq 'm') {
                 $i++;
                 if ($i > $argc) {
                     Panic("Syntax Error: Expected: regexp\n");
@@ -133,7 +133,7 @@ sub Main() {
                 } else {
                     $matchColor[@matchColor] = GetColorValue($argv->[$i]);
                 }
-            } elsif ($arg =~ /^s$/) {
+            } elsif ($arg eq 's') {
                 $i++;
                 if($i > $argc) {
                     Panic("Syntax Error: Expected: goodRegExp");

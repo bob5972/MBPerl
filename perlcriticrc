@@ -1,4 +1,3 @@
-#!/usr/bin/perl
 #
 # perlcriticrc -- part of MBPerl
 #
@@ -28,3 +27,60 @@
 severity = 1
 verbose = 9
 
+# Not coding style or don't care
+[-NamingConventions::Capitalization]
+[-RegularExpressions::RequireLineBoundaryMatching]
+[-RegularExpressions::RequireExtendedFormatting]
+[-RegularExpressions::RequireDotMatchAnything]
+[-InputOutput::ProhibitExplicitStdin]
+[-ValuesAndExpressions::ProhibitInterpolationOfLiterals]
+[-CodeLayout::ProhibitParensWithBuiltins]
+[-CodeLayout::RequireTidyCode]
+[-Subroutines::ProhibitExcessComplexity]
+[-CodeLayout::RequireTrailingCommas]
+[-ControlStructures::ProhibitCascadingIfElse]
+[-RegularExpressions::ProhibitEnumeratedClasses]
+[-Subroutines::ProhibitSubroutinePrototypes]
+[-ValuesAndExpressions::ProhibitMagicNumbers]
+[-Modules::ProhibitAutomaticExportation]
+[-ClassHierarchies::ProhibitExplicitISA]
+[-ValuesAndExpressions::ProhibitEmptyQuotes]
+[-Subroutines::ProhibitExplicitReturnUndef]
+[-InputOutput::RequireBracedFileHandleWithPrint]
+[-ValuesAndExpressions::ProhibitNoisyQuotes]
+[-InputOutput::RequireBriefOpen]
+[-BuiltinFunctions::ProhibitReverseSortBlock]
+[-ValuesAndExpressions::ProhibitComplexVersion]
+[-ValuesAndExpressions::RequireConstantVersion]
+[-RegularExpressions::ProhibitUselessTopic]
+
+# Unclear value
+[-InputOutput::RequireCheckedSyscalls]
+[-InputOutput::RequireCheckedClose]
+
+# Specific exceptions that need to be waived
+[-BuiltinFunctions::ProhibitSleepViaSelect]
+[-ValuesAndExpressions::ProhibitConstantPragma]
+
+# Needs Audit/Cleanup
+[-Variables::ProhibitPunctuationVars]
+[-ControlStructures::ProhibitPostfixControls]
+[-ErrorHandling::RequireCheckingReturnValueOfEval]
+[-Subroutines::RequireFinalReturn]
+[-BuiltinFunctions::ProhibitStringyEval]
+[-Modules::RequireVersionVar]
+[-TestingAndDebugging::RequireUseStrict]
+[-TestingAndDebugging::RequireUseWarnings]
+[-ValuesAndExpressions::ProhibitMismatchedOperators]
+[-Variables::RequireLocalizedPunctuationVars]
+[-ControlStructures::ProhibitCStyleForLoops]
+[-CodeLayout::ProhibitHardTabs]
+[-RegularExpressions::ProhibitEscapedMetacharacters]
+[-ValuesAndExpressions::RequireInterpolationOfMetachars]
+[-ValuesAndExpressions::ProhibitImplicitNewlines]
+[-RegularExpressions::ProhibitSingleCharAlternation]
+[-RegularExpressions::ProhibitUnusedCapture]
+[-Subroutines::RequireArgUnpacking]
+[-InputOutput::ProhibitTwoArgOpen]
+[-ValuesAndExpressions::ProhibitEscapedCharacters]
+[-InputOutput::RequireCheckedOpen]

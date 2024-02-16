@@ -42,8 +42,6 @@ use MBBasic;
 use strict;
 use warnings;
 
-my %options;
-
 $MBBasic::PROGRAM_VERSION = "1.2";
 $MBBasic::PROGRAM_AUTHOR = "Michael Banack";
 $MBBasic::PROGRAM_COPYRIGHT_DATE = "2011-2021";
@@ -85,7 +83,6 @@ sub Main() {
         my @backref;
         my @backrefStart;
         my @backrefEnd;
-        my $i;
         my $printLine;
 
         $cmd = "{
@@ -96,14 +93,14 @@ sub Main() {
 
         eval($cmd);
 
-        foreach $i (1..$#backrefStart) {
+        foreach my $i (1..$#backrefStart) {
             my $len = $backrefEnd[$i] - $backrefStart[$i];
             $backref[$i] = substr($line, $backrefStart[$i],$len);
         }
 
         if (defined($printExp)) {
             $printLine = $printExp;
-            foreach $i (1..$#backref) {
+            foreach my $i (1..$#backref) {
                 $printLine =~ s/\$${i}/$backref[$i]/;
             }
             $line = "$printLine\n";
