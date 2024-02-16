@@ -1,0 +1,23 @@
+name: Perl Critic
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+permissions: read-all
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: checkout
+      uses: actions/checkout@v4
+      with:
+        submodules: recursive
+   - name: setup
+      run: sudo apt-get install libperl-critic-perl
+    - name: compile
+      run: ./compile.sh
