@@ -2,7 +2,7 @@
 #
 # color -- part of MBPerl
 #
-# Copyright (c) 2008-2021 Michael Banack <github@banack.net>
+# Copyright (c) 2008-2024 Michael Banack <github@banack.net>
 #
 # MIT License
 #
@@ -48,7 +48,7 @@ use warnings;
 $MBBasic::PROGRAM_VERSION = "1.2";
 $MBBasic::PROGRAM_NAME="color";
 $MBBasic::PROGRAM_AUTHOR = "Michael Banack";
-$MBBasic::PROGRAM_COPYRIGHT_DATE = "2008-2021";
+$MBBasic::PROGRAM_COPYRIGHT_DATE = "2008-2024";
 
 my $gScriptOptions = {
     # Does manual option parsing out of bareOptions.
@@ -105,10 +105,10 @@ sub Main() {
     $argc = ArrayLen($argv);
 
     # Manually parse arguments
-    for(my $i = 0; $i < $argc; $i++) {
+    for (my $i = 0; $i < $argc; $i++) {
         my $arg=$argv->[$i];
 
-        if($arg =~ s/^-//) 	{
+        if ($arg =~ s/^-//) {
             #Argument starts with -
             if ($arg eq 'k') {
                 $killExistingColors=1;

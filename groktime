@@ -2,7 +2,7 @@
 #
 # groktime -- part of MBPerl
 #
-# Copyright (c) 2023 Michael Banack <github@banack.net>
+# Copyright (c) 2023-2024 Michael Banack <github@banack.net>
 #
 # MIT License
 #
@@ -42,9 +42,9 @@ use MBBasic;
 use strict;
 use warnings;
 
-$MBBasic::PROGRAM_VERSION = "1.0";
+$MBBasic::PROGRAM_VERSION = "1.1";
 $MBBasic::PROGRAM_AUTHOR = "Michael Banack";
-$MBBasic::PROGRAM_COPYRIGHT_DATE = "2023";
+$MBBasic::PROGRAM_COPYRIGHT_DATE = "2023-2024";
 
 my $gScriptOptions = {
     "all|a!" => { desc => "Print all units",

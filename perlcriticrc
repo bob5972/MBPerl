@@ -53,10 +53,13 @@ verbose = 9
 [-ValuesAndExpressions::ProhibitComplexVersion]
 [-ValuesAndExpressions::RequireConstantVersion]
 [-RegularExpressions::ProhibitUselessTopic]
+[-Modules::RequireVersionVar]
+[-ControlStructures::ProhibitCStyleForLoops]
 
 # Unclear value
 [-InputOutput::RequireCheckedSyscalls]
 [-InputOutput::RequireCheckedClose]
+[-Subroutines::RequireFinalReturn]
 
 # Specific exceptions that need to be waived
 [-BuiltinFunctions::ProhibitSleepViaSelect]
@@ -66,15 +69,11 @@ verbose = 9
 [-Variables::ProhibitPunctuationVars]
 [-ControlStructures::ProhibitPostfixControls]
 [-ErrorHandling::RequireCheckingReturnValueOfEval]
-[-Subroutines::RequireFinalReturn]
 [-BuiltinFunctions::ProhibitStringyEval]
-[-Modules::RequireVersionVar]
 [-TestingAndDebugging::RequireUseStrict]
 [-TestingAndDebugging::RequireUseWarnings]
 [-ValuesAndExpressions::ProhibitMismatchedOperators]
 [-Variables::RequireLocalizedPunctuationVars]
-[-ControlStructures::ProhibitCStyleForLoops]
-[-CodeLayout::ProhibitHardTabs]
 [-RegularExpressions::ProhibitEscapedMetacharacters]
 [-ValuesAndExpressions::RequireInterpolationOfMetachars]
 [-ValuesAndExpressions::ProhibitImplicitNewlines]

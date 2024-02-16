@@ -2,7 +2,7 @@
 #
 # mreg -- part of MBPerl
 #
-# Copyright (c) 2009-2021 Michael Banack <github@banack.net>
+# Copyright (c) 2009-2024 Michael Banack <github@banack.net>
 #
 # MIT License
 #
@@ -43,8 +43,8 @@ use File::Copy;
 
 use MBBasic;
 
-$MBBasic::PROGRAM_VERSION="2.0";
-$MBBasic::PROGRAM_COPYRIGHT_DATE="2009-2021";
+$MBBasic::PROGRAM_VERSION="2.1";
+$MBBasic::PROGRAM_COPYRIGHT_DATE="2009-2024";
 $MBBasic::PROGRAM_AUTHOR="Michael Banack";
 
 my $gMregOptions = {
